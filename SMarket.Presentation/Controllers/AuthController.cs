@@ -1,4 +1,3 @@
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SMarket.Business.DTOs;
 using SMarket.Business.Services.Interfaces;
@@ -11,63 +10,119 @@ namespace SMarket.Presentation.Controllers
     public class AuthController : ControllerBase
     {
         private readonly IAuthService _authService;
+        private readonly IUserService _userService;
 
-        public AuthController(IAuthService authService)
+        public AuthController(IAuthService authService, IUserService userService)
         {
             _authService = authService;
+            _userService = userService;
         }
 
-        [Authorize(Roles = "Admin")]
         [HttpPost("register")]
-        public async Task<ActionResult<AuthResponseDto>> Register(RegisterDto registerDto)
+        public async Task<ActionResult<Response>> Register(RegisterDto registerDto)
         {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(new Response
+                {
+                    Message = "Invalid registration data.",
+                });
+            }
+
             try
             {
-                // var result = await _authService.RegisterAsync(registerDto);
-                return Ok();
+                var user = await _userService.GetUserByEmailAsync(registerDto.Email);
+
+                if (user != null)
+                {
+                    return BadRequest();
+                }
+
+                var cred = new CredentialDto
+                {
+                    Email = registerDto.Email,
+                    Password = registerDto.Password
+                };
+
+                _authService.SendOtpToEmail(cred);
+
+                return Ok(new Response
+                {
+                    Message = "Please enter the OTP sent to your email."
+                });
             }
             catch (InvalidOperationException ex)
             {
                 return BadRequest(new { message = ex.Message });
             }
-            catch (Exception ex)
-            {
-                return StatusCode(500, new { message = "An error occurred during registration" });
-            }
         }
 
         [HttpPost("login")]
-        public async Task<ActionResult<Response>> Login(LoginRequestDto loginRequestDto)
+        public async Task<ActionResult<Response>> Login(CredentialDto cred)
         {
             try
             {
-                await _authService.LoginAsync(loginRequestDto);
+                var isCredentialValid = await _authService.IsCredentialValidAsync(cred.Email, cred.Password);
+
+                if (!isCredentialValid)
+                {
+                    return Unauthorized(new { message = "Invalid email or password." });
+                }
+
+                _authService.SendOtpToEmail(cred);
+
                 return Ok(new Response
                 {
-                    Message = "Vui lòng nhập mã OTP đã được gửi đến email của bạn",
+                    Message = "Please enter the OTP sent to your email.",
                 });
             }
             catch (Exception)
             {
-                return Unauthorized(new { message = "Invalid email or password" });
+                return Unauthorized(new { message = "Invalid email or password." });
             }
         }
 
-        [HttpPost("verify-otp")]
-        public ActionResult<Response> VerifyOtp(VerifyOtpRequest req)
+        [HttpPost("verify-login-otp")]
+        public async Task<ActionResult<Response>> VerifyLoginOtp(VerifyOtpRequest req)
         {
             try
             {
-                var result = _authService.VerifyOtp(req.Email, req.Otp);
+                _authService.VerifyOtp(req.Email, req.Otp);
+                var user = await _userService.GetUserByEmailAsync(req.Email);
                 return Ok(new Response
                 {
-                    Message = "Đăng nhập thành công",
-                    Data = result
+                    Message = "Login successful.",
+                    Data = user
                 });
             }
             catch (Exception)
             {
-                return Unauthorized(new { message = "Invalid or expired OTP" });
+                return Unauthorized(new { message = "Invalid or expired OTP." });
+            }
+        }
+
+        [HttpPost("verify-register-otp")]
+        public async Task<ActionResult<Response>> VerifyRegisterOtp(VerifyOtpRequest req)
+        {
+            try
+            {
+                var cred = _authService.VerifyOtp(req.Email, req.Otp);
+
+                if (cred == null)
+                {
+                    return Unauthorized(new { message = "Invalid or expired OTP." });
+                }
+
+                var newUser = await _userService.CreateBuyerAsync(cred);
+                return Ok(new Response
+                {
+                    Message = "Registration successful.",
+                    Data = newUser
+                });
+            }
+            catch (Exception)
+            {
+                return Unauthorized(new { message = "Invalid or expired OTP." });
             }
         }
     }

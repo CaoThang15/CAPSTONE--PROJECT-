@@ -23,14 +23,58 @@ namespace SMarket.Business.Services
             return user != null ? _mapper.Map<UserDto>(user) : null;
         }
 
-        Task<IEnumerable<UserDto>> IUserService.GetAllUsersAsync()
+        public async Task<UserDto?> GetUserByEmailAsync(string email)
         {
-            throw new NotImplementedException();
+            var user = await _userRepository.GetByEmailAsync(email);
+            return user != null ? _mapper.Map<UserDto>(user) : null;
         }
 
-        public Task<UserDto> CreateUserAsync(CreateUserDto createUserDto)
+        public async Task<IEnumerable<UserDto>> GetAllUsersAsync()
         {
-            throw new NotImplementedException();
+            var users = await _userRepository.GetAllAsync();
+            return _mapper.Map<IEnumerable<UserDto>>(users);
+        }
+
+        public async Task<UserDto> CreateBuyerAsync(CredentialDto cred)
+        {
+            var createUser = new User
+            {
+                Email = cred.Email,
+                Password = BCrypt.Net.BCrypt.HashPassword(cred.Password),
+                Name = $"User_{Guid.NewGuid().ToString().Substring(0, 8)}",
+                RoleId = 2
+            };
+
+            var user = await _userRepository.AddAsync(createUser);
+            return _mapper.Map<UserDto>(user);
+        }
+
+        public async Task<UserDto> CreateSellerAsync(CreateUserDto createUserDto)
+        {
+            var createUser = new User
+            {
+                Email = createUserDto.Email,
+                Password = createUserDto.Password,
+                Name = $"User_{Guid.NewGuid().ToString().Substring(0, 8)}",
+                RoleId = 3
+            };
+
+            var user = await _userRepository.AddAsync(createUser);
+            return _mapper.Map<UserDto>(user);
+        }
+
+        public async Task<UserDto> CreateAdminAsync(CreateUserDto createUserDto)
+        {
+            var createUser = new User
+            {
+                Email = createUserDto.Email,
+                Password = createUserDto.Password,
+                Name = $"User_{Guid.NewGuid().ToString().Substring(0, 8)}",
+                RoleId = 1
+            };
+
+            var user = await _userRepository.AddAsync(createUser);
+            return _mapper.Map<UserDto>(user);
         }
 
         public Task UpdateUserAsync(int id, UpdateUserDto updateUserDto)

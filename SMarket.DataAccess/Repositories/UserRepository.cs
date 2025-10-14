@@ -26,12 +26,6 @@ namespace SMarket.DataAccess.Repositories
                 .Include(u => u.Role)
                 .FirstOrDefaultAsync(u => u.Id == id);
 
-            // Debug: Check if user exists and log RoleId
-            if (user != null)
-            {
-                Console.WriteLine($"User found: {user.Name}, RoleId: {user.RoleId}, Role: {(user.Role?.Name ?? "NULL")}");
-            }
-
             return user;
         }
 
@@ -72,27 +66,6 @@ namespace SMarket.DataAccess.Repositories
         public async Task SaveChangesAsync()
         {
             await _context.SaveChangesAsync();
-        }
-
-        // Debug method to check role relationship
-        public async Task<bool> ValidateUserRoleRelationshipAsync(int userId)
-        {
-            var user = await _context.Users.FindAsync(userId);
-            if (user == null)
-            {
-                Console.WriteLine($"User with ID {userId} not found");
-                return false;
-            }
-
-            var role = await _context.Roles.FindAsync(user.RoleId);
-            if (role == null)
-            {
-                Console.WriteLine($"Role with ID {user.RoleId} not found for user {user.Name}");
-                return false;
-            }
-
-            Console.WriteLine($"User: {user.Name} has RoleId: {user.RoleId} which corresponds to Role: {role.Name}");
-            return true;
         }
     }
 }
