@@ -1,0 +1,6 @@
+@SMarket.Presentation_HostAddress = http://localhost:5212
+
+GET {{SMarket.Presentation_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
