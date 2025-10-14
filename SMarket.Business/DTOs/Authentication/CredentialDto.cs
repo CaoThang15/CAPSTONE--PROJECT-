@@ -2,7 +2,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace SMarket.Business.DTOs
 {
-    public class LoginRequestDto
+    public class CredentialDto
     {
         [Required]
         [EmailAddress]
