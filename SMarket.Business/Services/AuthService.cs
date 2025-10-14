@@ -18,15 +18,21 @@ namespace SMarket.Business.Services
         private readonly IConfiguration _configuration;
         private readonly IUserRepository _userRepository;
         private readonly IMapper _mapper;
+        private readonly IEmailService _emailService;
+        private readonly IOtpService _otpService;
+        private readonly IBackgroundTaskQueue _taskQueue;
 
-        public AuthService(IConfiguration configuration, IUserRepository userRepository, IMapper mapper)
+        public AuthService(IConfiguration configuration, IUserRepository userRepository, IMapper mapper, IEmailService emailService, IOtpService otpService, IBackgroundTaskQueue taskQueue)
         {
             _configuration = configuration;
             _userRepository = userRepository;
             _mapper = mapper;
+            _emailService = emailService;
+            _otpService = otpService;
+            _taskQueue = taskQueue;
         }
 
-        public async Task<AuthResponseDto> LoginAsync(LoginRequestDto loginRequest)
+        public async Task LoginAsync(LoginRequestDto loginRequest)
         {
             var user = await _userRepository.GetByEmailAsync(loginRequest.Email);
 
@@ -35,13 +41,37 @@ namespace SMarket.Business.Services
                 throw new UnauthorizedAccessException("Invalid email or password");
             }
 
-            var token = GenerateJwtToken(user.Id, user.Email, user.Role.Name);
+            var otp = new Random().Next(100000, 999999).ToString();
+            _otpService.SaveOtp(user.Email, otp, DateTime.UtcNow.AddMinutes(5), user);
 
-            return new AuthResponseDto
+            _taskQueue.QueueOtp(() =>
             {
-                AccessToken = token,
-                UserDto = _mapper.Map<UserDto>(user)
-            };
+                _emailService.SendEmailAsync(
+        user.Email,
+        "Your OTP Code",
+        $"<h3>Your OTP is: <b>{otp}</b></h3><p>It will expire in 5 minutes.</p>"
+        );
+            });
+        }
+
+        public AuthResponseDto VerifyOtp(string email, string otp)
+        {
+            var stored = _otpService.GetOtp(email);
+            if (stored.HasValue && stored.Value.Expiry > DateTime.UtcNow && stored.Value.Otp == otp)
+            {
+                _otpService.RemoveOtp(email);
+                var token = GenerateJwtToken(stored.Value.user.Id, stored.Value.user.Email, stored.Value.user.Role.Name);
+
+                return new AuthResponseDto
+                {
+                    AccessToken = token,
+                    UserDto = _mapper.Map<UserDto>(stored.Value.user)
+                };
+            }
+            else
+            {
+                throw new UnauthorizedAccessException("Invalid or expired OTP");
+            }
         }
 
         public Task<AuthResponseDto> RegisterAsync(RegisterDto registerDto)
