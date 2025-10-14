@@ -6,6 +6,7 @@ using Microsoft.IdentityModel.Tokens;
 using SMarket.Business.Mapping;
 using SMarket.Business.Services;
 using SMarket.Business.Services.Interfaces;
+using SMarket.Business.Services.Workers;
 using SMarket.DataAccess.Context;
 using SMarket.DataAccess.Repositories;
 using SMarket.DataAccess.Repositories.Interfaces;
@@ -58,6 +59,11 @@ namespace SMarket.Business.ServiceManager
             // Register authentication service
             services.AddScoped<IAuthService, AuthService>();
             services.AddScoped<IUserService, UserService>();
+            services.AddScoped<IEmailService, EmailService>();
+            services.AddSingleton<IBackgroundTaskQueue, BackgroundTaskQueue>();
+            services.AddHostedService<OtpWorker>();
+            services.AddSingleton<IOtpService, InMemoryOtpService>();
+
 
             // Add other business services here
             services.AddScoped<IUserRepository, UserRepository>();

@@ -41,11 +41,10 @@ namespace SMarket.Presentation.Controllers
         {
             try
             {
-                var result = await _authService.LoginAsync(loginRequestDto);
+                await _authService.LoginAsync(loginRequestDto);
                 return Ok(new Response
                 {
-                    Message = "Đăng nhập thành công",
-                    Data = result
+                    Message = "Vui lòng nhập mã OTP đã được gửi đến email của bạn",
                 });
             }
             catch (Exception)
@@ -54,18 +53,22 @@ namespace SMarket.Presentation.Controllers
             }
         }
 
-        [HttpGet("public")]
-        public IActionResult Public() =>
-    Ok(new { message = "Anyone can see this" });
-
-        [HttpGet("private")]
-        [Authorize]
-        public IActionResult Private() =>
-            Ok(new { message = $"Hello {User.Identity?.Name}, you are authenticated!" });
-
-        [HttpGet("admin")]
-        [Authorize(Roles = "Admin")]
-        public IActionResult AdminOnly() =>
-            Ok(new { message = "Only Admins can access this" });
+        [HttpPost("verify-otp")]
+        public ActionResult<Response> VerifyOtp(VerifyOtpRequest req)
+        {
+            try
+            {
+                var result = _authService.VerifyOtp(req.Email, req.Otp);
+                return Ok(new Response
+                {
+                    Message = "Đăng nhập thành công",
+                    Data = result
+                });
+            }
+            catch (Exception)
+            {
+                return Unauthorized(new { message = "Invalid or expired OTP" });
+            }
+        }
     }
 }
