@@ -12,7 +12,6 @@ namespace SMarket.DataAccess.Models
         [Required, MaxLength(255)]
         public string? Name { get; set; }
 
-        // Navigation
         public ICollection<User> Users { get; set; }
     }
 }
