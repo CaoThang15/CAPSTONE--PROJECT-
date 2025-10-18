@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using SMarket.Business.Enums;
 
 namespace SMarket.Business.DTOs
 {
@@ -11,5 +12,8 @@ namespace SMarket.Business.DTOs
         [Required]
         [MinLength(6)]
         public string Password { get; set; } = string.Empty;
+
+        [Required]
+        public RoleEnum Role { get; set; }
     }
 }

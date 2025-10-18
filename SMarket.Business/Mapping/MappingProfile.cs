@@ -9,8 +9,9 @@ namespace SMarket.Business.Mapping
         public MappingProfile()
         {
             CreateMap<User, UserDto>();
-            CreateMap<CreateUserDto, User>();
-            CreateMap<UpdateUserDto, User>();
+            CreateMap<UpdateUserDto, User>()
+                .ForMember(dest => dest.Address, opt => opt.MapFrom(src =>
+                    $"{src.Address}, {src.Ward}, {src.Province}".Trim(',', ' ')));
         }
     }
 }

@@ -60,6 +60,7 @@ namespace SMarket.Business.ServiceManager
             services.AddScoped<IAuthService, AuthService>();
             services.AddScoped<IUserService, UserService>();
             services.AddScoped<IEmailService, EmailService>();
+            services.AddSingleton<ITokenBlacklistService, InMemoryTokenBlacklistService>();
             services.AddSingleton<IBackgroundTaskQueue, BackgroundTaskQueue>();
             services.AddHostedService<OtpWorker>();
             services.AddSingleton<IOtpService, InMemoryOtpService>();
