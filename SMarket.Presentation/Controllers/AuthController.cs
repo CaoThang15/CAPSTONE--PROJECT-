@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SMarket.Business.DTOs;
 using SMarket.Business.Services.Interfaces;
@@ -11,11 +12,13 @@ namespace SMarket.Presentation.Controllers
     {
         private readonly IAuthService _authService;
         private readonly IUserService _userService;
+        private readonly ITokenBlacklistService _tokenBlacklistService;
 
-        public AuthController(IAuthService authService, IUserService userService)
+        public AuthController(IAuthService authService, IUserService userService, ITokenBlacklistService tokenBlacklistService)
         {
             _authService = authService;
             _userService = userService;
+            _tokenBlacklistService = tokenBlacklistService;
         }
 
         [HttpPost("register")]
@@ -41,7 +44,8 @@ namespace SMarket.Presentation.Controllers
                 var cred = new CredentialDto
                 {
                     Email = registerDto.Email,
-                    Password = registerDto.Password
+                    Password = registerDto.Password,
+                    Role = registerDto.Role
                 };
 
                 _authService.SendOtpToEmail(cred);
@@ -89,10 +93,17 @@ namespace SMarket.Presentation.Controllers
             {
                 _authService.VerifyOtp(req.Email, req.Otp);
                 var user = await _userService.GetUserByEmailAsync(req.Email);
+
+                if (user == null)
+                {
+                    return Unauthorized(new { message = "User not found." });
+                }
+
+                var token = _authService.GenerateJwtToken(user.Id, user.Email, user.RoleId);
                 return Ok(new Response
                 {
                     Message = "Login successful.",
-                    Data = user
+                    Data = new AuthResponseDto { UserDto = user, AccessToken = token }
                 });
             }
             catch (Exception)
@@ -113,17 +124,32 @@ namespace SMarket.Presentation.Controllers
                     return Unauthorized(new { message = "Invalid or expired OTP." });
                 }
 
-                var newUser = await _userService.CreateBuyerAsync(cred);
+                var newUser = await _userService.CreateUserAsync(cred);
+                var token = _authService.GenerateJwtToken(newUser.Id, newUser.Email, newUser.RoleId);
+
                 return Ok(new Response
                 {
                     Message = "Registration successful.",
-                    Data = newUser
+                    Data = new AuthResponseDto { UserDto = newUser, AccessToken = token }
                 });
             }
             catch (Exception)
             {
                 return Unauthorized(new { message = "Invalid or expired OTP." });
             }
+        }
+
+        [HttpPost("logout")]
+        [Authorize]
+        public IActionResult Logout()
+        {
+            var token = Request.Headers["Authorization"].ToString().Replace("Bearer ", "");
+
+            var expiry = _authService.GetTokenExpiry(token);
+
+            _tokenBlacklistService.Blacklist(token, expiry);
+
+            return Ok(new { message = "Logged out successfully" });
         }
     }
 }

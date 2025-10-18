@@ -35,42 +35,14 @@ namespace SMarket.Business.Services
             return _mapper.Map<IEnumerable<UserDto>>(users);
         }
 
-        public async Task<UserDto> CreateBuyerAsync(CredentialDto cred)
+        public async Task<UserDto> CreateUserAsync(CredentialDto cred)
         {
             var createUser = new User
             {
                 Email = cred.Email,
                 Password = BCrypt.Net.BCrypt.HashPassword(cred.Password),
                 Name = $"User_{Guid.NewGuid().ToString().Substring(0, 8)}",
-                RoleId = 2
-            };
-
-            var user = await _userRepository.AddAsync(createUser);
-            return _mapper.Map<UserDto>(user);
-        }
-
-        public async Task<UserDto> CreateSellerAsync(CreateUserDto createUserDto)
-        {
-            var createUser = new User
-            {
-                Email = createUserDto.Email,
-                Password = createUserDto.Password,
-                Name = $"User_{Guid.NewGuid().ToString().Substring(0, 8)}",
-                RoleId = 3
-            };
-
-            var user = await _userRepository.AddAsync(createUser);
-            return _mapper.Map<UserDto>(user);
-        }
-
-        public async Task<UserDto> CreateAdminAsync(CreateUserDto createUserDto)
-        {
-            var createUser = new User
-            {
-                Email = createUserDto.Email,
-                Password = createUserDto.Password,
-                Name = $"User_{Guid.NewGuid().ToString().Substring(0, 8)}",
-                RoleId = 1
+                RoleId = (int)cred.Role
             };
 
             var user = await _userRepository.AddAsync(createUser);

@@ -7,5 +7,7 @@ namespace SMarket.Business.Services.Interfaces
         void SendOtpToEmail(CredentialDto cred);
         CredentialDto? VerifyOtp(string email, string otp);
         Task<bool> IsCredentialValidAsync(string email, string password);
+        string GenerateJwtToken(int userId, string email, int role);
+        DateTime GetTokenExpiry(string token);
     }
 }
