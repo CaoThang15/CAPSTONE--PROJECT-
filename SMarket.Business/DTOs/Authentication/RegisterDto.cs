@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using SMarket.Business.Enums;
 
 namespace SMarket.Business.DTOs
 {
@@ -18,5 +19,8 @@ namespace SMarket.Business.DTOs
         [Required]
         [Compare("Password", ErrorMessage = "Passwords do not match.")]
         public string ConfirmPassword { get; set; } = string.Empty;
+
+        [Required]
+        public RoleEnum Role { get; set; }
     }
 }
