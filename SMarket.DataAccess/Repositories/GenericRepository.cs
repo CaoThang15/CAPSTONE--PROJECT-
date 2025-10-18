@@ -1,15 +1,16 @@
 using System.Linq.Expressions;
 using Microsoft.EntityFrameworkCore;
+using SMarket.DataAccess.Context;
 using SMarket.DataAccess.Repositories.Interfaces;
 
 namespace SMarket.DataAccess.Repositories
 {
     public class GenericRepository<T> : IGenericRepository<T> where T : class
     {
-        private readonly DbContext _context;
+        private readonly AppDbContext _context;
         private readonly DbSet<T> _dbSet;
 
-        public GenericRepository(DbContext context)
+        public GenericRepository(AppDbContext context)
         {
             _context = context;
             _dbSet = _context.Set<T>();
@@ -31,10 +32,11 @@ namespace SMarket.DataAccess.Repositories
             return entity;
         }
 
-        public async Task UpdateAsync(T entity)
+        public async Task<T> UpdateAsync(T entity)
         {
             _dbSet.Update(entity);
             await Task.CompletedTask;
+            return entity;
         }
 
         public async Task DeleteAsync(int id)

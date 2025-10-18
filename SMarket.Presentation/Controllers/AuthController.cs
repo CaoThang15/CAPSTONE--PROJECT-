@@ -1,3 +1,4 @@
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SMarket.Business.DTOs;
@@ -100,6 +101,9 @@ namespace SMarket.Presentation.Controllers
                 }
 
                 var token = _authService.GenerateJwtToken(user.Id, user.Email, user.RoleId);
+
+                _authService.SetTokenCookie(Response, token);
+
                 return Ok(new Response
                 {
                     Message = "Login successful.",
@@ -127,6 +131,8 @@ namespace SMarket.Presentation.Controllers
                 var newUser = await _userService.CreateUserAsync(cred);
                 var token = _authService.GenerateJwtToken(newUser.Id, newUser.Email, newUser.RoleId);
 
+                _authService.SetTokenCookie(Response, token);
+
                 return Ok(new Response
                 {
                     Message = "Registration successful.",
@@ -149,7 +155,83 @@ namespace SMarket.Presentation.Controllers
 
             _tokenBlacklistService.Blacklist(token, expiry);
 
-            return Ok(new { message = "Logged out successfully" });
+            _authService.RemoveTokenCookie(Response);
+
+            return Ok(new Response
+            {
+                Message = "Logged out successfully"
+            });
+        }
+
+        [HttpPost("forgot-password")]
+        public async Task<ActionResult<Response>> ForgotPassword(ForgotPasswordDto forgotPasswordDto)
+        {
+            try
+            {
+                if (!ModelState.IsValid)
+                {
+                    var errors = ModelState.Where(x => x.Value?.Errors.Count > 0).ToDictionary(kvp => kvp.Key, kvp => kvp.Value?.Errors.Select(e => e.ErrorMessage).ToArray() ?? Array.Empty<string>());
+                    return BadRequest(new Response
+                    {
+                        Message = "Invalid data.",
+                        Data = errors
+                    });
+                }
+
+                var user = await _userService.GetUserByEmailAsync(forgotPasswordDto.Email);
+
+                if (user == null)
+                {
+                    return BadRequest(new Response
+                    {
+                        Message = "User does not exist."
+                    });
+                }
+
+                _authService.SendOtpToEmail(new CredentialDto { Email = forgotPasswordDto.Email, Password = forgotPasswordDto.NewPassword });
+
+                return Ok(new Response
+                {
+                    Message = "OTP sent to email. Please verify to reset your password."
+                });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new Response
+                {
+                    Message = "Failed to process forgot password request.",
+                    Data = ex.Message
+                });
+            }
+        }
+
+        [HttpPost("verify-forgot-password-otp")]
+        public async Task<ActionResult<Response>> VerifyForgotPasswordOtp(VerifyOtpRequest req)
+        {
+            try
+            {
+                var cred = _authService.VerifyOtp(req.Email, req.Otp);
+
+                if (cred == null)
+                {
+                    return Unauthorized(new { message = "Invalid or expired OTP." });
+                }
+
+                await _userService.ChangePasswordAsync(cred.Email, cred.Password);
+
+                return Ok(new Response
+                {
+                    Message = "You can now login with your new password.",
+                });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new Response
+                {
+                    Message = "Failed to verify OTP.",
+                    Data = ex.Message
+                });
+            }
         }
     }
 }

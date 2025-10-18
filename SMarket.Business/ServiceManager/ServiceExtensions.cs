@@ -3,11 +3,13 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
-using SMarket.Business.Mapping;
+using SMarket.Business.Mappers;
 using SMarket.Business.Services;
 using SMarket.Business.Services.Interfaces;
 using SMarket.Business.Services.Workers;
+using SMarket.Business.Workers;
 using SMarket.DataAccess.Context;
+using SMarket.DataAccess.Models;
 using SMarket.DataAccess.Repositories;
 using SMarket.DataAccess.Repositories.Interfaces;
 using System.Text;
@@ -16,14 +18,16 @@ namespace SMarket.Business.ServiceManager
 {
     public static class ServiceExtensions
     {
-        public static void ConfigureDbContext(this IServiceCollection services, IConfiguration configuration)
+        public static IServiceCollection ConfigureDbContext(this IServiceCollection services, IConfiguration configuration)
         {
             services.AddDbContext<AppDbContext>(options =>
-                options.UseSqlServer(configuration.GetConnectionString("DefaultConnection"),
+                options.UseNpgsql(configuration.GetConnectionString("DefaultConnection"),
                     b => b.MigrationsAssembly("SMarket.DataAccess")));
+
+            return services;
         }
 
-        public static void ConfigureJwtAuthentication(this IServiceCollection services, IConfiguration configuration)
+        public static IServiceCollection ConfigureJwtAuthentication(this IServiceCollection services, IConfiguration configuration)
         {
             var jwtSettings = configuration.GetSection("JwtSettings");
             var secretKey = Encoding.UTF8.GetBytes(jwtSettings["SecretKey"]!);
@@ -48,26 +52,78 @@ namespace SMarket.Business.ServiceManager
                     ValidateLifetime = true,
                     ClockSkew = TimeSpan.Zero
                 };
+
+                options.Events = new JwtBearerEvents
+                {
+                    OnMessageReceived = context =>
+                    {
+                        var authorization = context.Request.Headers["Authorization"].FirstOrDefault();
+                        if (!string.IsNullOrEmpty(authorization) && authorization.StartsWith("Bearer "))
+                        {
+                            return Task.CompletedTask;
+                        }
+
+                        if (context.Request.Cookies.ContainsKey("access_token"))
+                        {
+                            context.Token = context.Request.Cookies["access_token"];
+                        }
+
+                        return Task.CompletedTask;
+                    }
+                };
             });
+
+            return services;
         }
 
-        public static void ConfigureBusinessServices(this IServiceCollection services)
+        public static IServiceCollection ConfigureBusinessServices(this IServiceCollection services)
         {
-            // Register AutoMapper
-            services.AddAutoMapper(cfg => cfg.AddProfile<MappingProfile>());
+            // Replace AutoMapper with custom mapper
+            services.AddScoped<ICustomMapper, CustomMapper>();
 
-            // Register authentication service
+            services.AddHttpContextAccessor();
+
             services.AddScoped<IAuthService, AuthService>();
             services.AddScoped<IUserService, UserService>();
             services.AddScoped<IEmailService, EmailService>();
+            services.AddTransient<ICloudinaryService, CloudinaryService>();
             services.AddSingleton<ITokenBlacklistService, InMemoryTokenBlacklistService>();
+            services.AddSingleton<IOtpService, InMemoryOtpService>();
+            services.AddScoped<ICategoryService, CategoryService>();
+            services.AddScoped<IVoucherService, VoucherService>();
+            services.AddScoped<ICartService, CartService>();
+            services.AddScoped<IProductService, ProductService>();
+
             services.AddSingleton<IBackgroundTaskQueue, BackgroundTaskQueue>();
             services.AddHostedService<OtpWorker>();
-            services.AddSingleton<IOtpService, InMemoryOtpService>();
+            services.AddHostedService<TokenCleanupWorker>();
 
-
-            // Add other business services here
             services.AddScoped<IUserRepository, UserRepository>();
+            services.AddScoped<ICategoryRepository, CategoryRepository>();
+            services.AddScoped<IVoucherRepository, VoucherRepository>();
+            services.AddScoped<ICartRepository, CartRepository>();
+            services.AddScoped<IProductRepository, ProductRepository>();
+
+            // Generic repositories
+            services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
+
+            return services;
+        }
+
+        public static IServiceCollection AddCorsPolicies(this IServiceCollection services)
+        {
+            services.AddCors(options =>
+            {
+                options.AddPolicy("AllowAll", builder =>
+                {
+                    builder.WithOrigins("http://localhost:3000", "https://s-market-fpt.netlify.app/")
+                            .AllowCredentials()
+                            .AllowAnyMethod()
+                            .AllowAnyHeader();
+                });
+            });
+
+            return services;
         }
     }
 }

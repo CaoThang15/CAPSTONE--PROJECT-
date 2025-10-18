@@ -1,7 +1,9 @@
+using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 using SMarket.Business.DTOs;
+using SMarket.Business.Mappers;
 using SMarket.DataAccess.Context;
 using SMarket.DataAccess.Models;
 using System.IdentityModel.Tokens.Jwt;
@@ -9,7 +11,7 @@ using System.Security.Claims;
 using System.Text;
 using SMarket.Business.Services.Interfaces;
 using SMarket.DataAccess.Repositories.Interfaces;
-using AutoMapper;
+using SMarket.Utility.Enums;
 
 namespace SMarket.Business.Services
 {
@@ -17,13 +19,14 @@ namespace SMarket.Business.Services
     {
         private readonly IConfiguration _configuration;
         private readonly IUserRepository _userRepository;
-        private readonly IMapper _mapper;
+        private readonly ICustomMapper _mapper;
         private readonly IEmailService _emailService;
         private readonly IOtpService _otpService;
         private readonly IBackgroundTaskQueue _taskQueue;
         private readonly ITokenBlacklistService _tokenBlacklistService;
+        private readonly IHttpContextAccessor _httpContextAccessor;
 
-        public AuthService(IConfiguration configuration, IUserRepository userRepository, IMapper mapper, IEmailService emailService, IOtpService otpService, IBackgroundTaskQueue taskQueue, ITokenBlacklistService tokenBlacklistService)
+        public AuthService(IConfiguration configuration, IUserRepository userRepository, ICustomMapper mapper, IEmailService emailService, IOtpService otpService, IBackgroundTaskQueue taskQueue, ITokenBlacklistService tokenBlacklistService, IHttpContextAccessor httpContextAccessor)
         {
             _configuration = configuration;
             _userRepository = userRepository;
@@ -32,6 +35,7 @@ namespace SMarket.Business.Services
             _otpService = otpService;
             _taskQueue = taskQueue;
             _tokenBlacklistService = tokenBlacklistService;
+            _httpContextAccessor = httpContextAccessor;
         }
 
         public void SendOtpToEmail(CredentialDto cred)
@@ -83,17 +87,25 @@ namespace SMarket.Business.Services
             }
         }
 
-        public string GenerateJwtToken(int userId, string email, int role)
+        public string GenerateJwtToken(int userId, string email, int roleId)
         {
             var jwtSection = _configuration.GetSection("JwtSettings");
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSection["SecretKey"]!));
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
+            string roleName = roleId switch
+            {
+                1 => nameof(RoleType.Admin),
+                2 => nameof(RoleType.Buyer),
+                3 => nameof(RoleType.Seller),
+                _ => "Unknown"
+            };
+
             var claims = new[]
             {
                 new Claim(ClaimTypes.NameIdentifier, userId.ToString()),
                 new Claim(ClaimTypes.Name, email),
-                new Claim(ClaimTypes.Role, role.ToString()),
+                new Claim(ClaimTypes.Role, roleName),
             };
 
             var token = new JwtSecurityToken(
@@ -119,6 +131,35 @@ namespace SMarket.Business.Services
             var expDateTime = DateTimeOffset.FromUnixTimeSeconds(expUnix).UtcDateTime;
 
             return expDateTime;
+        }
+
+        public void SetTokenCookie(HttpResponse response, string token)
+        {
+            var expiry = GetTokenExpiry(token);
+            var cookieOptions = new CookieOptions
+            {
+                HttpOnly = true,
+                Secure = false,
+                SameSite = SameSiteMode.Strict,
+                Expires = expiry,
+                Path = "/"
+            };
+
+            response.Cookies.Append("access_token", token, cookieOptions);
+        }
+
+        public void RemoveTokenCookie(HttpResponse response)
+        {
+            var cookieOptions = new CookieOptions
+            {
+                HttpOnly = true,
+                Secure = false,
+                SameSite = SameSiteMode.Strict,
+                Expires = DateTime.UtcNow.AddDays(-1),
+                Path = "/"
+            };
+
+            response.Cookies.Append("access_token", "", cookieOptions);
         }
     }
 }

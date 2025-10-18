@@ -41,10 +41,21 @@ namespace SMarket.DataAccess.Repositories
             return entity;
         }
 
-        public async Task UpdateAsync(User entity)
+        public async Task<User> UpdateAsync(User entity)
         {
-            _context.Set<User>().Update(entity);
-            await _context.SaveChangesAsync();
+            var user = await _context.Users.FindAsync(entity.Id);
+            if (user != null)
+            {
+                user.Name = entity.Name;
+                user.Phone = entity.Phone;
+                user.Address = entity.Address;
+                user.Avatar = entity.Avatar;
+                user.Ward = entity.Ward;
+                user.Province = entity.Province;
+                await _context.SaveChangesAsync();
+                return user;
+            }
+            throw new InvalidOperationException("User not found");
         }
 
         public async Task DeleteAsync(int id)

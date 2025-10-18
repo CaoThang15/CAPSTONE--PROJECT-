@@ -1,13 +1,13 @@
 
-using SMarket.Business.Mapping;
 using SMarket.Business.ServiceManager;
 using SMarket.Business.Middleware;
+using System.Reflection;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.ConfigureDbContext(builder.Configuration);
 builder.Services.ConfigureJwtAuthentication(builder.Configuration);
-builder.Services.ConfigureBusinessServices();
+builder.Services.ConfigureBusinessServices().AddCorsPolicies();
 
 builder.Services.AddControllers()
     .ConfigureApiBehaviorOptions(options =>
@@ -28,6 +28,10 @@ builder.Services.AddSwaggerGen(c =>
         Type = Microsoft.OpenApi.Models.SecuritySchemeType.ApiKey,
         Scheme = "Bearer"
     });
+
+    var xmlFilename = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
+    var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFilename);
+    c.IncludeXmlComments(xmlPath, includeControllerXmlComments: true);
 });
 
 var app = builder.Build();
@@ -38,12 +42,12 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+app.UseCors("AllowAll");
 app.UseHttpsRedirection();
 
 app.UseAuthentication();
 app.UseMiddleware<JwtBlacklistMiddleware>();
 app.UseAuthorization();
-
 app.MapControllers();
 
 app.Run();
