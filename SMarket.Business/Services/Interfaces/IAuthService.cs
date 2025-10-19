@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Http;
 using SMarket.Business.DTOs;
 
 namespace SMarket.Business.Services.Interfaces
@@ -9,5 +10,7 @@ namespace SMarket.Business.Services.Interfaces
         Task<bool> IsCredentialValidAsync(string email, string password);
         string GenerateJwtToken(int userId, string email, int role);
         DateTime GetTokenExpiry(string token);
+        void SetTokenCookie(HttpResponse response, string token);
+        void RemoveTokenCookie(HttpResponse response);
     }
 }

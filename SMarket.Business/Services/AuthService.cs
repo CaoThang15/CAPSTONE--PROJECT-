@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
@@ -22,8 +23,9 @@ namespace SMarket.Business.Services
         private readonly IOtpService _otpService;
         private readonly IBackgroundTaskQueue _taskQueue;
         private readonly ITokenBlacklistService _tokenBlacklistService;
+        private readonly IHttpContextAccessor _httpContextAccessor;
 
-        public AuthService(IConfiguration configuration, IUserRepository userRepository, IMapper mapper, IEmailService emailService, IOtpService otpService, IBackgroundTaskQueue taskQueue, ITokenBlacklistService tokenBlacklistService)
+        public AuthService(IConfiguration configuration, IUserRepository userRepository, IMapper mapper, IEmailService emailService, IOtpService otpService, IBackgroundTaskQueue taskQueue, ITokenBlacklistService tokenBlacklistService, IHttpContextAccessor httpContextAccessor)
         {
             _configuration = configuration;
             _userRepository = userRepository;
@@ -32,6 +34,7 @@ namespace SMarket.Business.Services
             _otpService = otpService;
             _taskQueue = taskQueue;
             _tokenBlacklistService = tokenBlacklistService;
+            _httpContextAccessor = httpContextAccessor;
         }
 
         public void SendOtpToEmail(CredentialDto cred)
@@ -119,6 +122,35 @@ namespace SMarket.Business.Services
             var expDateTime = DateTimeOffset.FromUnixTimeSeconds(expUnix).UtcDateTime;
 
             return expDateTime;
+        }
+
+        public void SetTokenCookie(HttpResponse response, string token)
+        {
+            var expiry = GetTokenExpiry(token);
+            var cookieOptions = new CookieOptions
+            {
+                HttpOnly = true,
+                Secure = false,
+                SameSite = SameSiteMode.Strict,
+                Expires = expiry,
+                Path = "/"
+            };
+
+            response.Cookies.Append("access_token", token, cookieOptions);
+        }
+
+        public void RemoveTokenCookie(HttpResponse response)
+        {
+            var cookieOptions = new CookieOptions
+            {
+                HttpOnly = true,
+                Secure = false,
+                SameSite = SameSiteMode.Strict,
+                Expires = DateTime.UtcNow.AddDays(-1),
+                Path = "/"
+            };
+
+            response.Cookies.Append("access_token", "", cookieOptions);
         }
     }
 }
