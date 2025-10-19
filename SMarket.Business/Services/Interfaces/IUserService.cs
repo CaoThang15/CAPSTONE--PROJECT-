@@ -10,5 +10,7 @@ namespace SMarket.Business.Services.Interfaces
         Task<UserDto> CreateUserAsync(CredentialDto cred);
         Task<UserDto> UpdateUserAsync(int userId, UpdateUserDto updateUserDto);
         Task DeleteUserAsync(int id);
+        Task ChangePasswordAsync(string email, string newPassword);
+        Task ChangePasswordAsync(int userId, string currentPassword, string newPassword);
     }
 }

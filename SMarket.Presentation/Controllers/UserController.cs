@@ -151,5 +151,56 @@ namespace SMarket.Presentation.Controllers
                 });
             }
         }
+
+        [HttpPatch("change-password")]
+        public async Task<ActionResult<Response>> ChangePassword(ChangePasswordDto changePasswordDto)
+        {
+            try
+            {
+                if (!ModelState.IsValid)
+                {
+                    var errors = ModelState
+                        .Where(x => x.Value?.Errors.Count > 0)
+                        .ToDictionary(
+                            kvp => kvp.Key,
+                            kvp => kvp.Value?.Errors.Select(e => e.ErrorMessage).ToArray() ?? Array.Empty<string>()
+                        );
+
+                    return BadRequest(new Response
+                    {
+                        Message = "Invalid password data.",
+                        Data = errors
+                    });
+                }
+
+                var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (!int.TryParse(userIdClaim, out var userId))
+                {
+                    return Unauthorized(new Response
+                    {
+                        Message = "Invalid user token."
+                    });
+                }
+
+                await _userService.ChangePasswordAsync(
+                    userId,
+                    changePasswordDto.CurrentPassword,
+                    changePasswordDto.NewPassword
+                );
+
+                return Ok(new Response
+                {
+                    Message = "Password changed successfully."
+                });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new Response
+                {
+                    Message = "Failed to change password.",
+                    Data = ex.Message
+                });
+            }
+        }
     }
 }
