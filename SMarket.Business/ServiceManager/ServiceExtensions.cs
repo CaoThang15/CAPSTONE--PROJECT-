@@ -66,8 +66,12 @@ namespace SMarket.Business.ServiceManager
             services.AddSingleton<IOtpService, InMemoryOtpService>();
 
 
+            // Category services
+            services.AddScoped<ICategoryService, CategoryService>();
+
             // Add other business services here
             services.AddScoped<IUserRepository, UserRepository>();
+            services.AddScoped<ICategoryRepository, CategoryRepository>();
         }
     }
 }

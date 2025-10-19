@@ -12,6 +12,14 @@ namespace SMarket.Business.Mapping
             CreateMap<UpdateUserDto, User>()
                 .ForMember(dest => dest.Address, opt => opt.MapFrom(src =>
                     $"{src.Address}, {src.Ward}, {src.Province}".Trim(',', ' ')));
+
+            // Category mappings
+            CreateMap<Category, CategoryDto>();
+            CreateMap<CreateCategoryDto, Category>();
+            CreateMap<UpdateCategoryDto, Category>();
+
+            // CategoryProperty mappings
+            CreateMap<CategoryProperty, CategoryPropertyDto>();
         }
     }
 }
