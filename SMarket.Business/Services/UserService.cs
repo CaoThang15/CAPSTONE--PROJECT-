@@ -61,5 +61,39 @@ namespace SMarket.Business.Services
         {
             throw new NotImplementedException();
         }
+
+        public async Task ChangePasswordAsync(string email, string newPassword)
+        {
+            var user = await _userRepository.GetByEmailAsync(email);
+            if (user == null)
+            {
+                throw new InvalidOperationException("User not found.");
+            }
+
+            user.Password = BCrypt.Net.BCrypt.HashPassword(newPassword);
+            await _userRepository.UpdateAsync(user);
+        }
+
+        public async Task ChangePasswordAsync(int userId, string currentPassword, string newPassword)
+        {
+            var user = await _userRepository.GetByIdAsync(userId);
+            if (user == null)
+            {
+                throw new InvalidOperationException("User not found.");
+            }
+
+            if (!BCrypt.Net.BCrypt.Verify(currentPassword, user.Password))
+            {
+                throw new InvalidOperationException("Current password is incorrect.");
+            }
+
+            if (BCrypt.Net.BCrypt.Verify(newPassword, user.Password))
+            {
+                throw new InvalidOperationException("New password must be different from current password.");
+            }
+
+            user.Password = BCrypt.Net.BCrypt.HashPassword(newPassword);
+            await _userRepository.UpdateAsync(user);
+        }
     }
 }
