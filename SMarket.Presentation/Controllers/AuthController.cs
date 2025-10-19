@@ -101,6 +101,9 @@ namespace SMarket.Presentation.Controllers
                 }
 
                 var token = _authService.GenerateJwtToken(user.Id, user.Email, user.RoleId);
+
+                _authService.SetTokenCookie(Response, token);
+
                 return Ok(new Response
                 {
                     Message = "Login successful.",
@@ -128,6 +131,8 @@ namespace SMarket.Presentation.Controllers
                 var newUser = await _userService.CreateUserAsync(cred);
                 var token = _authService.GenerateJwtToken(newUser.Id, newUser.Email, newUser.RoleId);
 
+                _authService.SetTokenCookie(Response, token);
+
                 return Ok(new Response
                 {
                     Message = "Registration successful.",
@@ -150,7 +155,12 @@ namespace SMarket.Presentation.Controllers
 
             _tokenBlacklistService.Blacklist(token, expiry);
 
-            return Ok(new { message = "Logged out successfully" });
+            _authService.RemoveTokenCookie(Response);
+
+            return Ok(new Response
+            {
+                Message = "Logged out successfully"
+            });
         }
 
         [HttpPost("forgot-password")]
@@ -201,6 +211,11 @@ namespace SMarket.Presentation.Controllers
             try
             {
                 var cred = _authService.VerifyOtp(req.Email, req.Otp);
+
+                if (cred == null)
+                {
+                    return Unauthorized(new { message = "Invalid or expired OTP." });
+                }
 
                 await _userService.ChangePasswordAsync(cred.Email, cred.Password);
 

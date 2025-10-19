@@ -7,6 +7,7 @@ using SMarket.Business.Mapping;
 using SMarket.Business.Services;
 using SMarket.Business.Services.Interfaces;
 using SMarket.Business.Services.Workers;
+using SMarket.Business.Workers;
 using SMarket.DataAccess.Context;
 using SMarket.DataAccess.Repositories;
 using SMarket.DataAccess.Repositories.Interfaces;
@@ -48,28 +49,45 @@ namespace SMarket.Business.ServiceManager
                     ValidateLifetime = true,
                     ClockSkew = TimeSpan.Zero
                 };
+
+                options.Events = new JwtBearerEvents
+                {
+                    OnMessageReceived = context =>
+                    {
+                        var authorization = context.Request.Headers["Authorization"].FirstOrDefault();
+                        if (!string.IsNullOrEmpty(authorization) && authorization.StartsWith("Bearer "))
+                        {
+                            return Task.CompletedTask;
+                        }
+
+                        if (context.Request.Cookies.ContainsKey("access_token"))
+                        {
+                            context.Token = context.Request.Cookies["access_token"];
+                        }
+
+                        return Task.CompletedTask;
+                    }
+                };
             });
         }
 
         public static void ConfigureBusinessServices(this IServiceCollection services)
         {
-            // Register AutoMapper
             services.AddAutoMapper(cfg => cfg.AddProfile<MappingProfile>());
 
-            // Register authentication service
+            services.AddHttpContextAccessor();
+
             services.AddScoped<IAuthService, AuthService>();
             services.AddScoped<IUserService, UserService>();
             services.AddScoped<IEmailService, EmailService>();
             services.AddSingleton<ITokenBlacklistService, InMemoryTokenBlacklistService>();
-            services.AddSingleton<IBackgroundTaskQueue, BackgroundTaskQueue>();
-            services.AddHostedService<OtpWorker>();
             services.AddSingleton<IOtpService, InMemoryOtpService>();
-
-
-            // Category services
             services.AddScoped<ICategoryService, CategoryService>();
 
-            // Add other business services here
+            services.AddSingleton<IBackgroundTaskQueue, BackgroundTaskQueue>();
+            services.AddHostedService<OtpWorker>();
+            services.AddHostedService<TokenCleanupWorker>();
+
             services.AddScoped<IUserRepository, UserRepository>();
             services.AddScoped<ICategoryRepository, CategoryRepository>();
         }

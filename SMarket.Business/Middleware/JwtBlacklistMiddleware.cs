@@ -16,17 +16,23 @@ namespace SMarket.Business.Middleware
 
         public async Task Invoke(HttpContext context, ITokenBlacklistService blacklist)
         {
+            string? token = null;
+
             var authHeader = context.Request.Headers["Authorization"].FirstOrDefault();
             if (!string.IsNullOrEmpty(authHeader) && authHeader.StartsWith("Bearer "))
             {
-                var token = authHeader.Substring("Bearer ".Length).Trim();
+                token = authHeader.Substring("Bearer ".Length).Trim();
+            }
+            else if (context.Request.Cookies.ContainsKey("access_token"))
+            {
+                token = context.Request.Cookies["access_token"];
+            }
 
-                if (blacklist.IsBlacklisted(token))
-                {
-                    context.Response.StatusCode = StatusCodes.Status401Unauthorized;
-                    await context.Response.WriteAsync("Token has been revoked");
-                    return;
-                }
+            if (!string.IsNullOrEmpty(token) && blacklist.IsBlacklisted(token))
+            {
+                context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+                await context.Response.WriteAsync("Token has been revoked");
+                return;
             }
 
             await _next(context);

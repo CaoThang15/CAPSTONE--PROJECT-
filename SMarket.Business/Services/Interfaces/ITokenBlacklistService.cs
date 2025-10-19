@@ -4,5 +4,6 @@ namespace SMarket.Business.Services.Interfaces
     {
         void Blacklist(string token, DateTime expiry);
         bool IsBlacklisted(string token);
+        Task CleanupExpiredTokensAsync();
     }
 }
