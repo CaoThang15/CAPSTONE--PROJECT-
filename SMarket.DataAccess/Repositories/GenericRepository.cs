@@ -31,10 +31,11 @@ namespace SMarket.DataAccess.Repositories
             return entity;
         }
 
-        public async Task UpdateAsync(T entity)
+        public async Task<T> UpdateAsync(T entity)
         {
             _dbSet.Update(entity);
             await Task.CompletedTask;
+            return entity;
         }
 
         public async Task DeleteAsync(int id)
