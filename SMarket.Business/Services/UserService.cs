@@ -49,9 +49,12 @@ namespace SMarket.Business.Services
             return _mapper.Map<UserDto>(user);
         }
 
-        public Task UpdateUserAsync(int id, UpdateUserDto updateUserDto)
+        public async Task<UserDto> UpdateUserAsync(int userId, UpdateUserDto updateUserDto)
         {
-            throw new NotImplementedException();
+            var user = _mapper.Map<User>(updateUserDto);
+            user.Id = userId;
+            var updatedUser = await _userRepository.UpdateAsync(user);
+            return _mapper.Map<UserDto>(updatedUser);
         }
 
         public Task DeleteUserAsync(int id)

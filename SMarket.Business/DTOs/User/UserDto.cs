@@ -22,29 +22,8 @@ namespace SMarket.Business.DTOs
         [JsonPropertyName("address")]
         public string? Address { get; set; }
 
-        [JsonPropertyName("role")]
-        public string Role { get; set; } = string.Empty;
-
         [JsonPropertyName("role_id")]
         public int RoleId { get; set; }
-    }
-
-    public class UpdateUserDto
-    {
-        [JsonPropertyName("name")]
-        public string? Name { get; set; }
-
-        [JsonPropertyName("phone")]
-        public string? Phone { get; set; }
-
-        [JsonPropertyName("avatar")]
-        public string? Avatar { get; set; }
-
-        [JsonPropertyName("address")]
-        public string? Address { get; set; }
-
-        [JsonPropertyName("roleId")]
-        public int? RoleId { get; set; }
     }
 
     public class UserProfileDto
@@ -69,8 +48,5 @@ namespace SMarket.Business.DTOs
 
         [JsonPropertyName("role")]
         public string Role { get; set; } = string.Empty;
-
-        [JsonPropertyName("memberSince")]
-        public DateTime MemberSince { get; set; }
     }
 }
