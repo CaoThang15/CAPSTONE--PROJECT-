@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
@@ -21,8 +22,10 @@ namespace SMarket.Business.Services
         private readonly IEmailService _emailService;
         private readonly IOtpService _otpService;
         private readonly IBackgroundTaskQueue _taskQueue;
+        private readonly ITokenBlacklistService _tokenBlacklistService;
+        private readonly IHttpContextAccessor _httpContextAccessor;
 
-        public AuthService(IConfiguration configuration, IUserRepository userRepository, IMapper mapper, IEmailService emailService, IOtpService otpService, IBackgroundTaskQueue taskQueue)
+        public AuthService(IConfiguration configuration, IUserRepository userRepository, IMapper mapper, IEmailService emailService, IOtpService otpService, IBackgroundTaskQueue taskQueue, ITokenBlacklistService tokenBlacklistService, IHttpContextAccessor httpContextAccessor)
         {
             _configuration = configuration;
             _userRepository = userRepository;
@@ -30,6 +33,8 @@ namespace SMarket.Business.Services
             _emailService = emailService;
             _otpService = otpService;
             _taskQueue = taskQueue;
+            _tokenBlacklistService = tokenBlacklistService;
+            _httpContextAccessor = httpContextAccessor;
         }
 
         public void SendOtpToEmail(CredentialDto cred)
@@ -81,7 +86,7 @@ namespace SMarket.Business.Services
             }
         }
 
-        private string GenerateJwtToken(int userId, string email, string role)
+        public string GenerateJwtToken(int userId, string email, int role)
         {
             var jwtSection = _configuration.GetSection("JwtSettings");
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSection["SecretKey"]!));
@@ -91,7 +96,7 @@ namespace SMarket.Business.Services
             {
                 new Claim(ClaimTypes.NameIdentifier, userId.ToString()),
                 new Claim(ClaimTypes.Name, email),
-                new Claim(ClaimTypes.Role, role)
+                new Claim(ClaimTypes.Role, role.ToString()),
             };
 
             var token = new JwtSecurityToken(
@@ -103,6 +108,49 @@ namespace SMarket.Business.Services
             );
 
             return new JwtSecurityTokenHandler().WriteToken(token);
+        }
+
+        public DateTime GetTokenExpiry(string token)
+        {
+            var handler = new JwtSecurityTokenHandler();
+            var jwtToken = handler.ReadJwtToken(token);
+
+            var exp = jwtToken.Claims.FirstOrDefault(c => c.Type == "exp")?.Value;
+            if (exp == null) throw new Exception("Token has no exp claim");
+
+            var expUnix = long.Parse(exp);
+            var expDateTime = DateTimeOffset.FromUnixTimeSeconds(expUnix).UtcDateTime;
+
+            return expDateTime;
+        }
+
+        public void SetTokenCookie(HttpResponse response, string token)
+        {
+            var expiry = GetTokenExpiry(token);
+            var cookieOptions = new CookieOptions
+            {
+                HttpOnly = true,
+                Secure = false,
+                SameSite = SameSiteMode.Strict,
+                Expires = expiry,
+                Path = "/"
+            };
+
+            response.Cookies.Append("access_token", token, cookieOptions);
+        }
+
+        public void RemoveTokenCookie(HttpResponse response)
+        {
+            var cookieOptions = new CookieOptions
+            {
+                HttpOnly = true,
+                Secure = false,
+                SameSite = SameSiteMode.Strict,
+                Expires = DateTime.UtcNow.AddDays(-1),
+                Path = "/"
+            };
+
+            response.Cookies.Append("access_token", "", cookieOptions);
         }
     }
 }

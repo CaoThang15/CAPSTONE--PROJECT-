@@ -1,12 +1,13 @@
 using System.ComponentModel.DataAnnotations;
-using SMarket.Business.Enums;
+using System.Text.Json.Serialization;
 
 namespace SMarket.Business.DTOs
 {
-    public class RegisterDto
+    public class ForgotPasswordDto
     {
         [Required]
         [EmailAddress]
+        [JsonPropertyName("email")]
         public string Email { get; set; } = string.Empty;
 
         [Required]
@@ -14,13 +15,12 @@ namespace SMarket.Business.DTOs
         [RegularExpression(
             pattern: "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[^\\w\\s]).{8,}$",
             ErrorMessage = "Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character.")]
-        public string Password { get; set; } = string.Empty;
+        [JsonPropertyName("new_password")]
+        public string NewPassword { get; set; } = string.Empty;
 
         [Required]
-        [Compare("Password", ErrorMessage = "Passwords do not match.")]
+        [Compare("NewPassword", ErrorMessage = "Passwords do not match.")]
+        [JsonPropertyName("confirm_password")]
         public string ConfirmPassword { get; set; } = string.Empty;
-
-        [Required]
-        public RoleEnum Role { get; set; }
     }
 }

@@ -35,56 +35,65 @@ namespace SMarket.Business.Services
             return _mapper.Map<IEnumerable<UserDto>>(users);
         }
 
-        public async Task<UserDto> CreateBuyerAsync(CredentialDto cred)
+        public async Task<UserDto> CreateUserAsync(CredentialDto cred)
         {
             var createUser = new User
             {
                 Email = cred.Email,
                 Password = BCrypt.Net.BCrypt.HashPassword(cred.Password),
                 Name = $"User_{Guid.NewGuid().ToString().Substring(0, 8)}",
-                RoleId = 2
+                RoleId = (int)cred.Role
             };
 
             var user = await _userRepository.AddAsync(createUser);
             return _mapper.Map<UserDto>(user);
         }
 
-        public async Task<UserDto> CreateSellerAsync(CreateUserDto createUserDto)
+        public async Task<UserDto> UpdateUserAsync(int userId, UpdateUserDto updateUserDto)
         {
-            var createUser = new User
-            {
-                Email = createUserDto.Email,
-                Password = createUserDto.Password,
-                Name = $"User_{Guid.NewGuid().ToString().Substring(0, 8)}",
-                RoleId = 3
-            };
-
-            var user = await _userRepository.AddAsync(createUser);
-            return _mapper.Map<UserDto>(user);
-        }
-
-        public async Task<UserDto> CreateAdminAsync(CreateUserDto createUserDto)
-        {
-            var createUser = new User
-            {
-                Email = createUserDto.Email,
-                Password = createUserDto.Password,
-                Name = $"User_{Guid.NewGuid().ToString().Substring(0, 8)}",
-                RoleId = 1
-            };
-
-            var user = await _userRepository.AddAsync(createUser);
-            return _mapper.Map<UserDto>(user);
-        }
-
-        public Task UpdateUserAsync(int id, UpdateUserDto updateUserDto)
-        {
-            throw new NotImplementedException();
+            var user = _mapper.Map<User>(updateUserDto);
+            user.Id = userId;
+            var updatedUser = await _userRepository.UpdateAsync(user);
+            return _mapper.Map<UserDto>(updatedUser);
         }
 
         public Task DeleteUserAsync(int id)
         {
             throw new NotImplementedException();
+        }
+
+        public async Task ChangePasswordAsync(string email, string newPassword)
+        {
+            var user = await _userRepository.GetByEmailAsync(email);
+            if (user == null)
+            {
+                throw new InvalidOperationException("User not found.");
+            }
+
+            user.Password = BCrypt.Net.BCrypt.HashPassword(newPassword);
+            await _userRepository.UpdateAsync(user);
+        }
+
+        public async Task ChangePasswordAsync(int userId, string currentPassword, string newPassword)
+        {
+            var user = await _userRepository.GetByIdAsync(userId);
+            if (user == null)
+            {
+                throw new InvalidOperationException("User not found.");
+            }
+
+            if (!BCrypt.Net.BCrypt.Verify(currentPassword, user.Password))
+            {
+                throw new InvalidOperationException("Current password is incorrect.");
+            }
+
+            if (BCrypt.Net.BCrypt.Verify(newPassword, user.Password))
+            {
+                throw new InvalidOperationException("New password must be different from current password.");
+            }
+
+            user.Password = BCrypt.Net.BCrypt.HashPassword(newPassword);
+            await _userRepository.UpdateAsync(user);
         }
     }
 }
