@@ -29,6 +29,10 @@ namespace SMarket.DataAccess.Models
 
         public string? Address { get; set; }
 
+        public string? Ward { get; set; }
+
+        public string? Province { get; set; }
+
         public int RoleId { get; set; }
 
         public Role? Role { get; set; }

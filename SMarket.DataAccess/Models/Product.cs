@@ -38,5 +38,7 @@ namespace SMarket.DataAccess.Models
         public User? Seller { get; set; }
 
         public ICollection<SharedFile> SharedFiles { get; set; }
+
+        public ICollection<ProductProperty> ProductProperties { get; set; }
     }
 }

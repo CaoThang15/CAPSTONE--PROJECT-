@@ -1,44 +1,50 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using SMarket.Business.DTOs;
-using SMarket.Business.Enums;
+using SMarket.Business.DTOs.Product;
 using SMarket.Business.Services.Interfaces;
+using SMarket.DataAccess.SearchCondition;
 using SMarket.Utility;
 using SMarket.Utility.Enums;
+using System.Security.Claims;
 
 namespace SMarket.Presentation.Controllers
 {
     [ApiController]
-    [Route("api/categories")]
+    [Route("api/products")]
     [Authorize]
-    public class CategoryController : ControllerBase
+    public class ProductController : ControllerBase
     {
-        private readonly ICategoryService _categoryService;
+        private readonly IProductService _productService;
 
-        public CategoryController(ICategoryService categoryService)
+        public ProductController(IProductService productService)
         {
-            _categoryService = categoryService;
+            _productService = productService;
         }
 
+        /// <summary>
+        /// Truyền vào Order: desc, asc.
+        /// Truyền vào OrderBy: Created_At, Name, Price.
+        /// Truyền vào Page &gt;= 1.
+        /// </summary>
         [HttpGet]
         [AllowAnonymous]
-        public async Task<ActionResult<Response>> GetAllCategories()
+        public async Task<ActionResult<Response>> SearchProducts([FromQuery] ListProductSearchCondition searchCondition)
         {
             try
             {
-                var categories = await _categoryService.GetAllCategoriesAsync();
+                var products = await _productService.GetListProductsAsync(searchCondition);
 
                 return Ok(new Response
                 {
-                    Message = "Categories retrieved successfully.",
-                    Data = categories
+                    Message = "Products retrieved successfully.",
+                    Data = products
                 });
             }
             catch (Exception ex)
             {
                 return BadRequest(new Response
                 {
-                    Message = "Failed to retrieve categories.",
+                    Message = "Failed to retrieve products.",
                     Data = ex.Message
                 });
             }
@@ -46,30 +52,30 @@ namespace SMarket.Presentation.Controllers
 
         [HttpGet("get/{id}")]
         [AllowAnonymous]
-        public async Task<ActionResult<Response>> GetCategoryById(int id)
+        public async Task<ActionResult<Response>> GetProductById(int id)
         {
             try
             {
-                var category = await _categoryService.GetCategoryByIdAsync(id);
-                if (category == null)
+                var product = await _productService.GetProductByIdAsync(id);
+                if (product == null)
                 {
                     return NotFound(new Response
                     {
-                        Message = "Category not found."
+                        Message = "Product not found."
                     });
                 }
 
                 return Ok(new Response
                 {
-                    Message = "Category retrieved successfully.",
-                    Data = category
+                    Message = "Product retrieved successfully.",
+                    Data = product
                 });
             }
             catch (Exception ex)
             {
                 return BadRequest(new Response
                 {
-                    Message = "Failed to retrieve category.",
+                    Message = "Failed to retrieve product.",
                     Data = ex.Message
                 });
             }
@@ -77,38 +83,39 @@ namespace SMarket.Presentation.Controllers
 
         [HttpGet("{slug}")]
         [AllowAnonymous]
-        public async Task<ActionResult<Response>> GetCategoryBySlug(string slug)
+        public async Task<ActionResult<Response>> GetProductBySlug(string slug)
         {
             try
             {
-                var category = await _categoryService.GetCategoryBySlugAsync(slug);
-                if (category == null)
+                var product = await _productService.GetProductBySlugAsync(slug);
+                if (product == null)
                 {
                     return NotFound(new Response
                     {
-                        Message = "Category not found."
+                        Message = "Product not found."
                     });
                 }
 
                 return Ok(new Response
                 {
-                    Message = "Category retrieved successfully.",
-                    Data = category
+                    Message = "Product retrieved successfully.",
+                    Data = product
                 });
             }
             catch (Exception ex)
             {
                 return BadRequest(new Response
                 {
-                    Message = "Failed to retrieve category.",
+                    Message = "Failed to retrieve product.",
                     Data = ex.Message
                 });
             }
         }
 
         [HttpPost]
+        [AllowAnonymous]
         // [Authorize(Roles = nameof(RoleType.Admin))]
-        public async Task<ActionResult<Response>> CreateCategory(CreateCategoryDto createCategoryDto)
+        public async Task<ActionResult<Response>> CreateProduct(CreateOrUpdateProductDto createProductDto)
         {
             try
             {
@@ -123,32 +130,32 @@ namespace SMarket.Presentation.Controllers
 
                     return BadRequest(new Response
                     {
-                        Message = "Invalid category data.",
+                        Message = "Invalid product data.",
                         Data = errors
                     });
                 }
 
-                var category = await _categoryService.CreateCategoryAsync(createCategoryDto);
+                await _productService.CreateProductAsync(createProductDto);
 
                 return Ok(new Response
                 {
-                    Message = "Category created successfully.",
-                    Data = category
+                    Message = "Product created successfully.",
                 });
             }
             catch (Exception ex)
             {
                 return BadRequest(new Response
                 {
-                    Message = "Failed to create category.",
+                    Message = "Failed to create product.",
                     Data = ex.Message
                 });
             }
         }
 
         [HttpPatch("{id}")]
-        [Authorize(Roles = nameof(RoleType.Admin))]
-        public async Task<ActionResult<Response>> UpdateCategory(int id, UpdateCategoryDto updateCategoryDto)
+        [AllowAnonymous]
+        // [Authorize(Roles = nameof(RoleType.Admin))]
+        public async Task<ActionResult<Response>> UpdateProduct(int id, CreateOrUpdateProductDto updateProductDto)
         {
             try
             {
@@ -163,40 +170,40 @@ namespace SMarket.Presentation.Controllers
 
                     return BadRequest(new Response
                     {
-                        Message = "Invalid category data.",
+                        Message = "Invalid product data.",
                         Data = errors
                     });
                 }
 
-                var category = await _categoryService.UpdateCategoryAsync(id, updateCategoryDto);
+                await _productService.UpdateProductAsync(id, updateProductDto);
 
                 return Ok(new Response
                 {
-                    Message = "Category updated successfully.",
-                    Data = category
+                    Message = "Product updated successfully.",
                 });
             }
             catch (Exception ex)
             {
                 return BadRequest(new Response
                 {
-                    Message = "Failed to update category.",
+                    Message = "Failed to update product.",
                     Data = ex.Message
                 });
             }
         }
 
         [HttpDelete("{id}")]
-        [Authorize(Roles = nameof(RoleType.Admin))]
-        public async Task<ActionResult<Response>> DeleteCategory(int id)
+        [AllowAnonymous]
+        // [Authorize(Roles = nameof(RoleType.Admin))]
+        public async Task<ActionResult<Response>> DeleteProduct(int id)
         {
             try
             {
-                await _categoryService.DeleteCategoryAsync(id);
+                await _productService.DeleteProductAsync(id);
 
                 return Ok(new Response
                 {
-                    Message = "Category deleted successfully."
+                    Message = "Product deleted successfully."
                 });
             }
             catch (ArgumentException ex)
@@ -210,24 +217,24 @@ namespace SMarket.Presentation.Controllers
             {
                 return BadRequest(new Response
                 {
-                    Message = "Failed to delete category.",
+                    Message = "Failed to delete product.",
                     Data = ex.Message
                 });
             }
         }
 
         /// <summary>
-        /// Nếu là create category: truyền id = 0.
-        /// Nếu là update category: truyền id = id category.
+        /// Nếu là create sản phẩm: truyền id = 0.
+        /// Nếu là update sản phẩm: truyền id = id sản phẩm.
         /// </summary>
         [HttpGet("gen-slug")]
         [AllowAnonymous]
         // [Authorize(Roles = nameof(RoleType.Admin))]
-        public async Task<ActionResult<Response>> GetUniqueSlug(int id, string name)
+        public async Task<ActionResult<Response>> GetUniqueProductSlug(int id, string name)
         {
             try
             {
-                var slug = await _categoryService.GetUniqueSlug(id, name);
+                var slug = await _productService.GetUniqueProductSlug(id, name);
 
                 return Ok(new Response
                 {

@@ -1,4 +1,6 @@
 using SMarket.Business.DTOs;
+using SMarket.Business.DTOs.Cart;
+using SMarket.Business.DTOs.Product;
 using SMarket.Business.DTOs.Voucher;
 using SMarket.DataAccess.Models;
 
@@ -117,6 +119,38 @@ namespace SMarket.Business.Mappers
                 return true;
             }
 
+            // CartItem mappings
+            if (sourceType == typeof(CartItem) && destinationType == typeof(CartItemDto))
+            {
+                MapCartItemToDto((CartItem)(object)source!, (CartItemDto)(object)destination!);
+                return true;
+            }
+
+            // Product mappings
+            if (sourceType == typeof(Product) && destinationType == typeof(ProductItemDto))
+            {
+                MapProductToDto((Product)(object)source!, (ProductItemDto)(object)destination!);
+                return true;
+            }
+
+            if (sourceType == typeof(CreateOrUpdateProductDto) && destinationType == typeof(Product))
+            {
+                MapCreateProductDtoToProduct((CreateOrUpdateProductDto)(object)source!, (Product)(object)destination!);
+                return true;
+            }
+
+            if (sourceType == typeof(CreateOrUpdateProductDto) && destinationType == typeof(List<SharedFile>))
+            {
+                MapCreateProductDtoToSharedFiles((CreateOrUpdateProductDto)(object)source!, (List<SharedFile>)(object)destination!);
+                return true;
+            }
+
+            if (sourceType == typeof(CreateOrUpdateProductDto) && destinationType == typeof(List<ProductProperty>))
+            {
+                MapCreateProductDtoToProperties((CreateOrUpdateProductDto)(object)source!, (List<ProductProperty>)(object)destination!);
+                return true;
+            }
+
             return false;
         }
 
@@ -132,6 +166,8 @@ namespace SMarket.Business.Mappers
             userDto.Phone = user.Phone;
             userDto.Avatar = user.Avatar;
             userDto.Address = user.Address;
+            userDto.Ward = user.Ward;
+            userDto.Province = user.Province;
             userDto.RoleId = user.RoleId;
         }
 
@@ -146,13 +182,14 @@ namespace SMarket.Business.Mappers
             if (!string.IsNullOrEmpty(updateUserDto.Avatar))
                 user.Avatar = updateUserDto.Avatar;
 
-            // Handle address combination
-            if (!string.IsNullOrEmpty(updateUserDto.Address) ||
-                !string.IsNullOrEmpty(updateUserDto.Ward) ||
-                !string.IsNullOrEmpty(updateUserDto.Province))
-            {
-                user.Address = $"{updateUserDto.Address}, {updateUserDto.Ward}, {updateUserDto.Province}".Trim(',', ' ');
-            }
+            if (!string.IsNullOrEmpty(updateUserDto.Address))
+                user.Address = updateUserDto.Address;
+
+            if (!string.IsNullOrEmpty(updateUserDto.Ward))
+                user.Ward = updateUserDto.Ward;
+
+            if (!string.IsNullOrEmpty(updateUserDto.Province))
+                user.Province = updateUserDto.Province;
         }
 
         #endregion
@@ -261,6 +298,27 @@ namespace SMarket.Business.Mappers
 
         #endregion
 
+        #region CartItem Mappings
+
+        private void MapCartItemToDto(CartItem cartItem, CartItemDto cartItemDto)
+        {
+            cartItemDto.Id = cartItem.Id;
+            cartItemDto.ProductId = cartItem.ProductId ?? 0;
+            cartItemDto.Quantity = cartItem.Quantity;
+            cartItemDto.UnitPrice = cartItem.UnitPrice;
+
+            if (cartItem.Product != null)
+            {
+                cartItemDto.ProductName = cartItem.Product.Name ?? string.Empty;
+                cartItemDto.ProductSlug = cartItem.Product.Slug ?? string.Empty;
+                cartItemDto.ProductPrice = cartItem.Product.Price;
+                cartItemDto.StockQuantity = cartItem.Product.StockQuantity;
+                cartItemDto.ProductImage = cartItem.Product.SharedFiles?.FirstOrDefault()?.Path;
+            }
+        }
+
+        #endregion
+
         #region Generic Property Mapping
 
         private void MapProperties<TSource, TDestination>(TSource source, TDestination destination, Type sourceType, Type destinationType)
@@ -281,6 +339,91 @@ namespace SMarket.Business.Mappers
                         }
                     }
                 }
+            }
+        }
+
+        #endregion
+
+        #region Product Mappings
+
+        private static void MapProductToDto(Product product, ProductItemDto productDto)
+        {
+            productDto.Id = product.Id;
+            productDto.CategoryId = product.CategoryId;
+            productDto.Name = product.Name;
+            productDto.Price = product.Price;
+            productDto.Slug = product.Slug;
+            productDto.Description = product.Description;
+            productDto.StockQuantity = product.StockQuantity;
+            productDto.Note = product.Note;
+            productDto.IsNew = product.IsNew;
+            productDto.IsAdminHide = product.IsAdminHide;
+            productDto.IsHide = product.IsHide;
+            productDto.SellerId = product.SellerId;
+            productDto.SharedFiles = [];
+            foreach (var file in product.SharedFiles)
+            {
+                if (file is not null && !string.IsNullOrEmpty(file.Path))
+                    productDto.SharedFiles.Add(new SharedFileDto
+                    {
+                        Name = file.Name,
+                        Path = file.Path
+                    });
+            }
+            productDto.Properties = [];
+            foreach (var property in product.ProductProperties)
+            {
+                productDto.Properties.Add(new ProductPropertyDto
+                {
+                    Id = property.Id,
+                    Value = property.Value,
+                    PropertyId = property.PropertyId,
+                    PropertyName = property.Property?.Name,
+                });
+            }
+        }
+
+        private static void MapCreateProductDtoToProduct(CreateOrUpdateProductDto createDto, Product product)
+        {
+            product.Id = createDto.Id ?? 0;
+            product.CategoryId = createDto.CategoryId;
+            product.Name = createDto.Name;
+            product.Price = createDto.Price;
+            product.Slug = createDto.Slug;
+            product.Description = createDto.Description;
+            product.StockQuantity = createDto.StockQuantity;
+            product.Note = createDto.Note;
+            product.IsNew = createDto.IsNew;
+            product.IsAdminHide = createDto.IsAdminHide;
+            product.IsHide = createDto.IsHide;
+            product.SellerId = createDto.SellerId;
+        }
+
+        private static void MapCreateProductDtoToSharedFiles(CreateOrUpdateProductDto createDto, List<SharedFile> sharedFiles)
+        {
+            sharedFiles.Clear();
+            foreach (var file in createDto.SharedFiles)
+            {
+                sharedFiles.Add(new SharedFile
+                {
+                    Name = file.Name,
+                    Path = file.Path,
+                });
+            }
+        }
+        
+        private static void MapCreateProductDtoToProperties(CreateOrUpdateProductDto createDto, List<ProductProperty> properties)
+        {
+            properties.Clear();
+            foreach(var property in createDto.Properties)
+            {
+                properties.Add(new ProductProperty
+                {
+                    Id = property.Id ?? 0,
+                    Value = property.Value,
+                    PropertyId = property.PropertyId,
+                    ProductId = createDto.Id,
+                });
             }
         }
 

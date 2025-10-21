@@ -1,6 +1,7 @@
 using SMarket.Business.DTOs;
 using SMarket.Business.Mappers;
 using SMarket.Business.Services.Interfaces;
+using SMarket.DataAccess.DTOs.Common;
 using SMarket.DataAccess.Models;
 using SMarket.DataAccess.Repositories.Interfaces;
 
@@ -29,11 +30,17 @@ namespace SMarket.Business.Services
             return category != null ? _mapper.Map<Category, CategoryDto>(category) : null;
         }
 
+        public async Task<CategoryDto?> GetCategoryBySlugAsync(string slug)
+        {
+            var category = await _categoryRepository.GetBySlugAsync(slug);
+            return category != null ? _mapper.Map<Category, CategoryDto>(category) : null;
+        }
+
         public async Task<CategoryDto> CreateCategoryAsync(CreateCategoryDto createCategoryDto)
         {
             if (string.IsNullOrWhiteSpace(createCategoryDto.Slug))
             {
-                createCategoryDto.Slug = GenerateSlug(createCategoryDto.Name);
+                createCategoryDto.Slug = Helpers.GenerateSlug(createCategoryDto.Name);
             }
 
             if (await _categoryRepository.SlugExistsAsync(createCategoryDto.Slug))
@@ -56,7 +63,7 @@ namespace SMarket.Business.Services
 
             if (string.IsNullOrWhiteSpace(updateCategoryDto.Slug))
             {
-                updateCategoryDto.Slug = GenerateSlug(updateCategoryDto.Name);
+                updateCategoryDto.Slug = Helpers.GenerateSlug(updateCategoryDto.Name);
             }
 
             if (await _categoryRepository.SlugExistsAsync(updateCategoryDto.Slug, cateId))
@@ -79,17 +86,9 @@ namespace SMarket.Business.Services
             await _categoryRepository.DeleteAsync(id);
         }
 
-        private string GenerateSlug(string name)
+        public async Task<string> GetUniqueSlug(long id, string name)
         {
-            return name.ToLowerInvariant()
-                      .Replace(" ", "-")
-                      .Replace("&", "and")
-                      .Replace("'", "")
-                      .Replace("\"", "")
-                      .Replace(",", "")
-                      .Replace(".", "")
-                      .Replace("!", "")
-                      .Replace("?", "");
+            return await _categoryRepository.GetUniqueSlug(id, name);
         }
     }
 }
