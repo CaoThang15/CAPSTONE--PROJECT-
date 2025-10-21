@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
-using SMarket.Business.Mapping;
+using SMarket.Business.Mappers;
 using SMarket.Business.Services;
 using SMarket.Business.Services.Interfaces;
 using SMarket.Business.Services.Workers;
@@ -20,7 +20,7 @@ namespace SMarket.Business.ServiceManager
         public static void ConfigureDbContext(this IServiceCollection services, IConfiguration configuration)
         {
             services.AddDbContext<AppDbContext>(options =>
-                options.UseSqlServer(configuration.GetConnectionString("DefaultConnection"),
+                options.UseNpgsql(configuration.GetConnectionString("DefaultConnection"),
                     b => b.MigrationsAssembly("SMarket.DataAccess")));
         }
 
@@ -73,7 +73,8 @@ namespace SMarket.Business.ServiceManager
 
         public static void ConfigureBusinessServices(this IServiceCollection services)
         {
-            services.AddAutoMapper(cfg => cfg.AddProfile<MappingProfile>());
+            // Replace AutoMapper with custom mapper
+            services.AddScoped<ICustomMapper, CustomMapper>();
 
             services.AddHttpContextAccessor();
 
@@ -84,6 +85,7 @@ namespace SMarket.Business.ServiceManager
             services.AddSingleton<ITokenBlacklistService, InMemoryTokenBlacklistService>();
             services.AddSingleton<IOtpService, InMemoryOtpService>();
             services.AddScoped<ICategoryService, CategoryService>();
+            services.AddScoped<IVoucherService, VoucherService>();
 
             services.AddSingleton<IBackgroundTaskQueue, BackgroundTaskQueue>();
             services.AddHostedService<OtpWorker>();
@@ -91,6 +93,7 @@ namespace SMarket.Business.ServiceManager
 
             services.AddScoped<IUserRepository, UserRepository>();
             services.AddScoped<ICategoryRepository, CategoryRepository>();
+            services.AddScoped<IVoucherRepository, VoucherRepository>();
         }
     }
 }

@@ -1,5 +1,5 @@
-using AutoMapper;
 using SMarket.Business.DTOs;
+using SMarket.Business.Mappers;
 using SMarket.Business.Services.Interfaces;
 using SMarket.DataAccess.Models;
 using SMarket.DataAccess.Repositories.Interfaces;
@@ -9,9 +9,9 @@ namespace SMarket.Business.Services
     public class CategoryService : ICategoryService
     {
         private readonly ICategoryRepository _categoryRepository;
-        private readonly IMapper _mapper;
+        private readonly ICustomMapper _mapper;
 
-        public CategoryService(ICategoryRepository categoryRepository, IMapper mapper)
+        public CategoryService(ICategoryRepository categoryRepository, ICustomMapper mapper)
         {
             _categoryRepository = categoryRepository;
             _mapper = mapper;
@@ -20,13 +20,13 @@ namespace SMarket.Business.Services
         public async Task<IEnumerable<CategoryDto>> GetAllCategoriesAsync()
         {
             var categories = await _categoryRepository.GetAllAsync();
-            return _mapper.Map<IEnumerable<CategoryDto>>(categories);
+            return _mapper.Map<Category, CategoryDto>(categories);
         }
 
         public async Task<CategoryDto?> GetCategoryByIdAsync(int id)
         {
             var category = await _categoryRepository.GetByIdAsync(id);
-            return category != null ? _mapper.Map<CategoryDto>(category) : null;
+            return category != null ? _mapper.Map<Category, CategoryDto>(category) : null;
         }
 
         public async Task<CategoryDto> CreateCategoryAsync(CreateCategoryDto createCategoryDto)
@@ -41,9 +41,9 @@ namespace SMarket.Business.Services
                 throw new InvalidOperationException($"Category with slug '{createCategoryDto.Slug}' already exists.");
             }
 
-            var category = _mapper.Map<Category>(createCategoryDto);
+            var category = _mapper.Map<CreateCategoryDto, Category>(createCategoryDto);
             var createdCategory = await _categoryRepository.AddAsync(category);
-            return _mapper.Map<CategoryDto>(createdCategory);
+            return _mapper.Map<Category, CategoryDto>(createdCategory);
         }
 
         public async Task<CategoryDto> UpdateCategoryAsync(int cateId, UpdateCategoryDto updateCategoryDto)
@@ -66,7 +66,7 @@ namespace SMarket.Business.Services
 
             _mapper.Map(updateCategoryDto, existingCategory);
             var updatedCategory = await _categoryRepository.UpdateAsync(existingCategory);
-            return _mapper.Map<CategoryDto>(updatedCategory);
+            return _mapper.Map<Category, CategoryDto>(updatedCategory);
         }
 
         public async Task DeleteCategoryAsync(int id)

@@ -4,11 +4,13 @@ using SMarket.Business.DTOs;
 using SMarket.Business.Enums;
 using SMarket.Business.Services.Interfaces;
 using SMarket.Utility;
+using SMarket.Utility.Enums;
 
 namespace SMarket.Presentation.Controllers
 {
     [ApiController]
     [Route("api/categories")]
+    [Authorize]
     public class CategoryController : ControllerBase
     {
         private readonly ICategoryService _categoryService;
@@ -19,6 +21,7 @@ namespace SMarket.Presentation.Controllers
         }
 
         [HttpGet]
+        [AllowAnonymous]
         public async Task<ActionResult<Response>> GetAllCategories()
         {
             try
@@ -42,6 +45,7 @@ namespace SMarket.Presentation.Controllers
         }
 
         [HttpGet("{id}")]
+        [AllowAnonymous]
         public async Task<ActionResult<Response>> GetCategoryById(int id)
         {
             try
@@ -72,7 +76,7 @@ namespace SMarket.Presentation.Controllers
         }
 
         [HttpPost]
-        [Authorize]
+        // [Authorize(Roles = nameof(RoleType.Admin))]
         public async Task<ActionResult<Response>> CreateCategory(CreateCategoryDto createCategoryDto)
         {
             try
@@ -112,7 +116,7 @@ namespace SMarket.Presentation.Controllers
         }
 
         [HttpPatch("{id}")]
-        [Authorize(Roles = "2")]
+        [Authorize(Roles = nameof(RoleType.Admin))]
         public async Task<ActionResult<Response>> UpdateCategory(int id, UpdateCategoryDto updateCategoryDto)
         {
             try
@@ -141,20 +145,6 @@ namespace SMarket.Presentation.Controllers
                     Data = category
                 });
             }
-            catch (ArgumentException ex)
-            {
-                return NotFound(new Response
-                {
-                    Message = ex.Message
-                });
-            }
-            catch (InvalidOperationException ex)
-            {
-                return BadRequest(new Response
-                {
-                    Message = ex.Message
-                });
-            }
             catch (Exception ex)
             {
                 return BadRequest(new Response
@@ -166,7 +156,7 @@ namespace SMarket.Presentation.Controllers
         }
 
         [HttpDelete("{id}")]
-        [Authorize]
+        [Authorize(Roles = nameof(RoleType.Admin))]
         public async Task<ActionResult<Response>> DeleteCategory(int id)
         {
             try
