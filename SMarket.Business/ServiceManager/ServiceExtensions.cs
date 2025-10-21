@@ -9,6 +9,7 @@ using SMarket.Business.Services.Interfaces;
 using SMarket.Business.Services.Workers;
 using SMarket.Business.Workers;
 using SMarket.DataAccess.Context;
+using SMarket.DataAccess.Models;
 using SMarket.DataAccess.Repositories;
 using SMarket.DataAccess.Repositories.Interfaces;
 using System.Text;
@@ -86,6 +87,8 @@ namespace SMarket.Business.ServiceManager
             services.AddSingleton<IOtpService, InMemoryOtpService>();
             services.AddScoped<ICategoryService, CategoryService>();
             services.AddScoped<IVoucherService, VoucherService>();
+            services.AddScoped<ICartService, CartService>();
+            services.AddScoped<IProductService, ProductService>();
 
             services.AddSingleton<IBackgroundTaskQueue, BackgroundTaskQueue>();
             services.AddHostedService<OtpWorker>();
@@ -94,6 +97,11 @@ namespace SMarket.Business.ServiceManager
             services.AddScoped<IUserRepository, UserRepository>();
             services.AddScoped<ICategoryRepository, CategoryRepository>();
             services.AddScoped<IVoucherRepository, VoucherRepository>();
+            services.AddScoped<ICartRepository, CartRepository>();
+            services.AddScoped<IProductRepository, ProductRepository>();
+
+            // Generic repositories
+            services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
         }
     }
 }

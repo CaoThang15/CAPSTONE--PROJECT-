@@ -63,7 +63,7 @@ namespace SMarket.DataAccess.Context
                     .OnDelete(DeleteBehavior.Restrict);
 
                 entity.HasOne(o => o.Voucher)
-                    .WithMany()
+                    .WithMany(v => v.Orders)
                     .HasForeignKey(o => o.VoucherId)
                     .OnDelete(DeleteBehavior.SetNull);
             });
@@ -86,8 +86,8 @@ namespace SMarket.DataAccess.Context
 
             modelBuilder.Entity<Voucher>(entity =>
             {
-                entity.HasOne<VoucherStatus>()
-                    .WithMany()
+                entity.HasOne<VoucherStatus>(v => v.Status)
+                    .WithMany(vs => vs.Vouchers)
                     .HasForeignKey(v => v.StatusId)
                     .OnDelete(DeleteBehavior.Restrict);
             });

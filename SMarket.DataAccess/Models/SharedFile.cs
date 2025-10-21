@@ -9,5 +9,9 @@ namespace SMarket.DataAccess.Models
 
         [Required]
         public string? Path { get; set; }
+
+        public Product? Product { get; set; }
+
+        public int? ProductId { get; set; }
     }
 }

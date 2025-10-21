@@ -50,6 +50,8 @@ namespace SMarket.DataAccess.Repositories
                 user.Phone = entity.Phone;
                 user.Address = entity.Address;
                 user.Avatar = entity.Avatar;
+                user.Ward = entity.Ward;
+                user.Province = entity.Province;
                 await _context.SaveChangesAsync();
                 return user;
             }
