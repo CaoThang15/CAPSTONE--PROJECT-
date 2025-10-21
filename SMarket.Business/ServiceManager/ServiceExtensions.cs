@@ -80,6 +80,7 @@ namespace SMarket.Business.ServiceManager
             services.AddScoped<IAuthService, AuthService>();
             services.AddScoped<IUserService, UserService>();
             services.AddScoped<IEmailService, EmailService>();
+            services.AddTransient<ICloudinaryService, CloudinaryService>();
             services.AddSingleton<ITokenBlacklistService, InMemoryTokenBlacklistService>();
             services.AddSingleton<IOtpService, InMemoryOtpService>();
             services.AddScoped<ICategoryService, CategoryService>();
