@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using SMarket.Business.DTOs;
 using SMarket.Business.Services.Interfaces;
 using SMarket.Utility;
+using SMarket.Utility.Enums;
 using System.Security.Claims;
 
 namespace SMarket.Presentation.Controllers
@@ -99,7 +100,7 @@ namespace SMarket.Presentation.Controllers
         }
 
         [HttpGet]
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = nameof(RoleType.Admin))]
         public async Task<ActionResult<Response>> GetAllUsers()
         {
             try
@@ -123,7 +124,7 @@ namespace SMarket.Presentation.Controllers
         }
 
         [HttpDelete("{id}")]
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = nameof(RoleType.Admin))]
         public async Task<ActionResult<Response>> DeleteUser(int id)
         {
             try
@@ -133,13 +134,6 @@ namespace SMarket.Presentation.Controllers
                 return Ok(new Response
                 {
                     Message = "User deleted successfully."
-                });
-            }
-            catch (ArgumentException ex)
-            {
-                return NotFound(new Response
-                {
-                    Message = ex.Message
                 });
             }
             catch (Exception ex)
