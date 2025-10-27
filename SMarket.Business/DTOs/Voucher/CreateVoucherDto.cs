@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using SMarket.Utility.Enums;
 
 namespace SMarket.Business.DTOs.Voucher
 {
@@ -30,6 +31,6 @@ namespace SMarket.Business.DTOs.Voucher
         public int UsageLimit { get; set; }
 
         [Required(ErrorMessage = "Status ID is required")]
-        public int StatusId { get; set; } = 1; // Default to Active
+        public int StatusId { get; set; } = (int)VoucherStatuses.Active;
     }
 }
