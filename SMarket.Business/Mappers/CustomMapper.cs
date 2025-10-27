@@ -1,5 +1,6 @@
 using SMarket.Business.DTOs;
 using SMarket.Business.DTOs.Cart;
+using SMarket.Business.DTOs.Feedback;
 using SMarket.Business.DTOs.Order;
 using SMarket.Business.DTOs.Product;
 using SMarket.Business.DTOs.Voucher;
@@ -174,6 +175,25 @@ namespace SMarket.Business.Mappers
             if (sourceType == typeof(OrderStatus) && destinationType == typeof(OrderStatusDto))
             {
                 MapOrderStatusToDto((OrderStatus)(object)source!, (OrderStatusDto)(object)destination!);
+                return true;
+            }
+
+            // Feedback mappings
+            if (sourceType == typeof(Feedback) && destinationType == typeof(FeedbackDto))
+            {
+                MapFeedbackToDto((Feedback)(object)source!, (FeedbackDto)(object)destination!);
+                return true;
+            }
+
+            if (sourceType == typeof(CreateOrUpdateFeedbackDto) && destinationType == typeof(Feedback))
+            {
+                MapCreateFeedbackDtoToFeedback((CreateOrUpdateFeedbackDto)(object)source!, (Feedback)(object)destination!);
+                return true;
+            }
+
+            if (sourceType == typeof(CreateOrUpdateFeedbackDto) && destinationType == typeof(SharedFile))
+            {
+                MapCreateFeedbackDtoToSharedFiles((CreateOrUpdateFeedbackDto)(object)source!, (SharedFile)(object)destination!);
                 return true;
             }
 
@@ -389,7 +409,7 @@ namespace SMarket.Business.Mappers
             productDto.SharedFiles = [];
             productDto.CreatedAt = product.CreatedAt;
             productDto.UpdatedAt = product.UpdatedAt;
-            
+
             if (product.Seller != null)
             {
                 productDto.Seller = Map<User, UserDto>(product.Seller);
@@ -484,6 +504,8 @@ namespace SMarket.Business.Mappers
             orderDto.StatusName = order.Status?.Name;
             orderDto.VoucherId = order.VoucherId;
             orderDto.DiscountAmount = order.Voucher?.DiscountAmount;
+            orderDto.CreatedAt = order.CreatedAt;
+            orderDto.UpdatedAt = order.UpdatedAt;
             orderDto.OrderDetails = [];
             foreach (var orderDetails in order.OrderDetails)
             {
@@ -542,6 +564,58 @@ namespace SMarket.Business.Mappers
                 });
             }
         }
+        #endregion
+
+        #region Feedback Mappings
+
+        private void MapFeedbackToDto(Feedback feedback, FeedbackDto feedbackDto)
+        {
+            feedbackDto.Id = feedback.Id;
+            feedbackDto.Content = feedback.Content;
+            feedbackDto.Rate = feedback.Rate;
+            feedbackDto.CreatedAt = feedback.CreatedAt;
+            feedbackDto.UpdatedAt = feedback.UpdatedAt;
+
+            if (feedback.User != null)
+            {
+                feedbackDto.User = Map<User, UserDto>(feedback.User);
+            }
+            else
+            {
+                feedbackDto.User = null;
+            }
+            if (feedback.Product != null)
+                feedbackDto.ProductInfo = new ProductInfo
+                {
+                    Id = feedback.Product.Id,
+                    CategoryId = feedback.Product.CategoryId,
+                    Name = feedback.Product.Name,
+                    Price = feedback.Product.Price,
+                    Slug = feedback.Product.Slug
+                };
+            if (feedback.SharedFile is not null && !string.IsNullOrEmpty(feedback.SharedFile.Path))
+                feedbackDto.SharedFile = new SharedFileDto
+                {
+                    Name = feedback.SharedFile.Name,
+                    Path = feedback.SharedFile.Path
+                };
+        }
+
+        private void MapCreateFeedbackDtoToFeedback(CreateOrUpdateFeedbackDto createDto, Feedback feedback)
+        {
+            feedback.Id = createDto.Id ?? 0;
+            feedback.Content = createDto.Content;
+            feedback.Rate = createDto.Rate;
+            feedback.ProductId = createDto.ProductId;
+            feedback.UserId = createDto.UserId;
+        }
+
+        private void MapCreateFeedbackDtoToSharedFiles(CreateOrUpdateFeedbackDto createDto, SharedFile sharedFile)
+        {
+            sharedFile.Name = createDto.SharedFile.Name;
+            sharedFile.Path = createDto.SharedFile.Path;
+        }
+
         #endregion
     }
 }

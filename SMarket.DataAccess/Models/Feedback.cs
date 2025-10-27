@@ -9,15 +9,15 @@ namespace SMarket.DataAccess.Models
 
         public int Rate { get; set; }
 
-        public int? FromUserId { get; set; }
+        public int? UserId { get; set; }
 
-        public User? FromUser { get; set; }
+        public User? User { get; set; }
 
-        public int? ToUserId { get; set; }
+        public int? ProductId { get; set; }
 
-        public User? ToUser { get; set; }
+        public Product? Product { get; set; }
 
-        public int FileId { get; set; }
+        public int SharedFileId { get; set; }
 
         public SharedFile? SharedFile { get; set; }
     }

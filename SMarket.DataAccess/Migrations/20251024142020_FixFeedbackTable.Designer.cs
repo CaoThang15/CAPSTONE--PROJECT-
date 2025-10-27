@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using SMarket.DataAccess.Context;
@@ -11,9 +12,11 @@ using SMarket.DataAccess.Context;
 namespace SMarket.DataAccess.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251024142020_FixFeedbackTable")]
+    partial class FixFeedbackTable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -139,6 +142,9 @@ namespace SMarket.DataAccess.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<int>("FileId")
+                        .HasColumnType("integer");
+
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("boolean");
 
@@ -148,7 +154,7 @@ namespace SMarket.DataAccess.Migrations
                     b.Property<int>("Rate")
                         .HasColumnType("integer");
 
-                    b.Property<int>("SharedFileId")
+                    b.Property<int?>("SharedFileId")
                         .HasColumnType("integer");
 
                     b.Property<DateTime?>("UpdatedAt")
@@ -753,9 +759,7 @@ namespace SMarket.DataAccess.Migrations
 
                     b.HasOne("SMarket.DataAccess.Models.SharedFile", "SharedFile")
                         .WithMany()
-                        .HasForeignKey("SharedFileId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("SharedFileId");
 
                     b.HasOne("SMarket.DataAccess.Models.User", "User")
                         .WithMany()

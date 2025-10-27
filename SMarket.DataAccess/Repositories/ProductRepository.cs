@@ -205,5 +205,27 @@ namespace SMarket.DataAccess.Repositories
 
             return uniqueSlug;
         }
+
+        public async Task HideOrShowBySeller(int id, bool isHide)
+        {
+            var product = await _context.Products.FindAsync(id);
+            if (product != null)
+            {
+                product.IsHide = isHide;
+                product.UpdatedAt = DateTime.UtcNow;
+                await _context.SaveChangesAsync();
+            }
+        }
+
+        public async Task HideOrShowByAdmin(int id, bool isHide)
+        {
+            var product = await _context.Products.FindAsync(id);
+            if (product != null)
+            {
+                product.IsAdminHide = isHide;
+                product.UpdatedAt = DateTime.UtcNow;
+                await _context.SaveChangesAsync();
+            }
+        }
     }
 }

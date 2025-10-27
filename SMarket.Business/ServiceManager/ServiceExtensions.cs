@@ -94,6 +94,7 @@ namespace SMarket.Business.ServiceManager
             services.AddScoped<ICartService, CartService>();
             services.AddScoped<IProductService, ProductService>();
             services.AddScoped<IOrderService, OrderService>();
+            services.AddScoped<IFeedbackService, FeedbackService>();
 
             services.AddSingleton<IBackgroundTaskQueue, BackgroundTaskQueue>();
             services.AddHostedService<OtpWorker>();
@@ -105,6 +106,7 @@ namespace SMarket.Business.ServiceManager
             services.AddScoped<ICartRepository, CartRepository>();
             services.AddScoped<IProductRepository, ProductRepository>();
             services.AddScoped<IOrderRepository, OrderRepository>();
+            services.AddScoped<IFeedbackRepository, FeedbackRepository>();
 
             // Generic repositories
             services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
