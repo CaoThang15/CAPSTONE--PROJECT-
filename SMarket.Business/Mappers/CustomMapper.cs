@@ -346,7 +346,7 @@ namespace SMarket.Business.Mappers
 
         #region Product Mappings
 
-        private static void MapProductToDto(Product product, ProductItemDto productDto)
+        private void MapProductToDto(Product product, ProductItemDto productDto)
         {
             productDto.Id = product.Id;
             productDto.CategoryId = product.CategoryId;
@@ -363,6 +363,15 @@ namespace SMarket.Business.Mappers
             productDto.SharedFiles = [];
             productDto.CreatedAt = product.CreatedAt;
             productDto.UpdatedAt = product.UpdatedAt;
+            
+            if (product.Seller != null)
+            {
+                productDto.Seller = Map<User, UserDto>(product.Seller);
+            }
+            else
+            {
+                productDto.Seller = null;
+            }
             foreach (var file in product.SharedFiles)
             {
                 if (file is not null && !string.IsNullOrEmpty(file.Path))
@@ -385,7 +394,7 @@ namespace SMarket.Business.Mappers
             }
         }
 
-        private static void MapCreateProductDtoToProduct(CreateOrUpdateProductDto createDto, Product product)
+        private void MapCreateProductDtoToProduct(CreateOrUpdateProductDto createDto, Product product)
         {
             product.Id = createDto.Id ?? 0;
             product.CategoryId = createDto.CategoryId;
@@ -401,7 +410,7 @@ namespace SMarket.Business.Mappers
             product.SellerId = createDto.SellerId;
         }
 
-        private static void MapCreateProductDtoToSharedFiles(CreateOrUpdateProductDto createDto, List<SharedFile> sharedFiles)
+        private void MapCreateProductDtoToSharedFiles(CreateOrUpdateProductDto createDto, List<SharedFile> sharedFiles)
         {
             sharedFiles.Clear();
             foreach (var file in createDto.SharedFiles)
@@ -413,11 +422,11 @@ namespace SMarket.Business.Mappers
                 });
             }
         }
-        
-        private static void MapCreateProductDtoToProperties(CreateOrUpdateProductDto createDto, List<ProductProperty> properties)
+
+        private void MapCreateProductDtoToProperties(CreateOrUpdateProductDto createDto, List<ProductProperty> properties)
         {
             properties.Clear();
-            foreach(var property in createDto.Properties)
+            foreach (var property in createDto.Properties)
             {
                 properties.Add(new ProductProperty
                 {

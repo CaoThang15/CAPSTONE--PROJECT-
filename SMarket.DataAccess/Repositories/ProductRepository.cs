@@ -31,6 +31,7 @@ namespace SMarket.DataAccess.Repositories
                 .Where(d => searchCondition.IsAdminHide == null || searchCondition.IsAdminHide == d.IsAdminHide)
                 .Where(d => searchCondition.SellerId == 0 || searchCondition.SellerId == d.SellerId)
                 .Include(d => d.SharedFiles.Where(f => !f.IsDeleted))
+                .Include(d => d.Seller)
                 .Include(d => d.ProductProperties.Where(p => !p.IsDeleted && p.Property != null && !p.Property.IsDeleted))
                 .ThenInclude(p => p!.Property)
                 .AsQueryable();
@@ -78,6 +79,7 @@ namespace SMarket.DataAccess.Repositories
             return await _context.Products
                 .Where(d => !d.IsDeleted && d.Id == id)
                 .Include(d => d.SharedFiles)
+                .Include(d => d.Seller)
                 .Include(d => d.ProductProperties)
                 .ThenInclude(p => p!.Property)
                 .OrderByDescending(d => d.CreatedAt)
@@ -88,6 +90,7 @@ namespace SMarket.DataAccess.Repositories
         {
             return await _context.Products
                 .Where(d => !d.IsDeleted && d.Slug == slug)
+                .Include(d => d.Seller)
                 .Include(d => d.SharedFiles)
                 .Include(d => d.ProductProperties)
                 .ThenInclude(p => p!.Property)
