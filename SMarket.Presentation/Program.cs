@@ -7,17 +7,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.ConfigureDbContext(builder.Configuration);
 builder.Services.ConfigureJwtAuthentication(builder.Configuration);
-builder.Services.ConfigureBusinessServices();
-
-builder.Services.AddCors(options =>
-{
-    options.AddPolicy("AllowFrontend", policy =>
-    {
-        policy.WithOrigins("https://s-market-fpt.netlify.app/")
-              .AllowAnyHeader()
-              .AllowAnyMethod();
-    });
-});
+builder.Services.ConfigureBusinessServices().AddCorsPolicies();
 
 builder.Services.AddControllers()
     .ConfigureApiBehaviorOptions(options =>
@@ -52,12 +42,12 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+app.UseCors("AllowAll");
 app.UseHttpsRedirection();
 
 app.UseAuthentication();
 app.UseMiddleware<JwtBlacklistMiddleware>();
 app.UseAuthorization();
-app.UseCors("AllowFrontend");
 app.MapControllers();
 
 app.Run();

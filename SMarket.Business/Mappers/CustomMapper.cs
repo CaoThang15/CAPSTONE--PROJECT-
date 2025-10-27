@@ -361,6 +361,8 @@ namespace SMarket.Business.Mappers
             productDto.IsHide = product.IsHide;
             productDto.SellerId = product.SellerId;
             productDto.SharedFiles = [];
+            productDto.CreatedAt = product.CreatedAt;
+            productDto.UpdatedAt = product.UpdatedAt;
             foreach (var file in product.SharedFiles)
             {
                 if (file is not null && !string.IsNullOrEmpty(file.Path))

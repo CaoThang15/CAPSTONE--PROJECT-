@@ -21,19 +21,18 @@ namespace SMarket.Business.Services
             _mapper = mapper;
         }
 
-        public async Task<PagingResult<ProductItemDto>> GetListProductsAsync(ListProductSearchCondition searchCondition)
+        public async Task<PaginationResult<ProductItemDto>> GetListProductsAsync(ListProductSearchCondition searchCondition)
         {
             var productsPaging = await _productRepository.GetListProductsAsync(searchCondition);
             var productDtos = _mapper.Map<Product, ProductItemDto>(productsPaging);
             var total = await _productRepository.GetCountProductsAsync(searchCondition);
-            var hasMore = searchCondition.Page * searchCondition.PageSize < total;
 
-            return new PagingResult<ProductItemDto>
-            {
-                Items = [.. productDtos],
-                Total = total,
-                HasMoreRecords = hasMore
-            };
+            return new PaginationResult<ProductItemDto>(
+                   currentPage: searchCondition.Page,
+                   pageSize: searchCondition.PageSize,
+                   totalItems: total,
+                   items: productDtos
+               );
         }
 
         public async Task<ProductItemDto> GetProductByIdAsync(int id)
