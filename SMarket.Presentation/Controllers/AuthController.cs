@@ -39,7 +39,9 @@ namespace SMarket.Presentation.Controllers
 
                 if (user != null)
                 {
-                    return BadRequest();
+                    return BadRequest(
+                        new Response { Message = "Email is already registered." }
+                    );
                 }
 
                 var cred = new CredentialDto
@@ -149,7 +151,15 @@ namespace SMarket.Presentation.Controllers
         [Authorize]
         public IActionResult Logout()
         {
-            var token = Request.Headers["Authorization"].ToString().Replace("Bearer ", "");
+            var token = HttpContext.Request.Cookies["access_token"];
+
+            if (string.IsNullOrEmpty(token))
+            {
+                return BadRequest(new Response
+                {
+                    Message = "No token found in cookies."
+                });
+            }
 
             var expiry = _authService.GetTokenExpiry(token);
 

@@ -18,14 +18,16 @@ namespace SMarket.Business.ServiceManager
 {
     public static class ServiceExtensions
     {
-        public static void ConfigureDbContext(this IServiceCollection services, IConfiguration configuration)
+        public static IServiceCollection ConfigureDbContext(this IServiceCollection services, IConfiguration configuration)
         {
             services.AddDbContext<AppDbContext>(options =>
                 options.UseNpgsql(configuration.GetConnectionString("DefaultConnection"),
                     b => b.MigrationsAssembly("SMarket.DataAccess")));
+
+            return services;
         }
 
-        public static void ConfigureJwtAuthentication(this IServiceCollection services, IConfiguration configuration)
+        public static IServiceCollection ConfigureJwtAuthentication(this IServiceCollection services, IConfiguration configuration)
         {
             var jwtSettings = configuration.GetSection("JwtSettings");
             var secretKey = Encoding.UTF8.GetBytes(jwtSettings["SecretKey"]!);
@@ -70,9 +72,11 @@ namespace SMarket.Business.ServiceManager
                     }
                 };
             });
+
+            return services;
         }
 
-        public static void ConfigureBusinessServices(this IServiceCollection services)
+        public static IServiceCollection ConfigureBusinessServices(this IServiceCollection services)
         {
             // Replace AutoMapper with custom mapper
             services.AddScoped<ICustomMapper, CustomMapper>();
@@ -102,6 +106,24 @@ namespace SMarket.Business.ServiceManager
 
             // Generic repositories
             services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
+
+            return services;
+        }
+
+        public static IServiceCollection AddCorsPolicies(this IServiceCollection services)
+        {
+            services.AddCors(options =>
+            {
+                options.AddPolicy("AllowAll", builder =>
+                {
+                    builder.WithOrigins("http://localhost:3000", "https://s-market-fpt.netlify.app/")
+                            .AllowCredentials()
+                            .AllowAnyMethod()
+                            .AllowAnyHeader();
+                });
+            });
+
+            return services;
         }
     }
 }

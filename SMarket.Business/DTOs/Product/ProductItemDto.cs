@@ -26,8 +26,12 @@ namespace SMarket.Business.DTOs.Product
 
         public int SellerId { get; set; }
 
+        public UserDto? Seller { get; set; }
+
         public List<SharedFileDto> SharedFiles { get; set; } = [];
 
         public List<ProductPropertyDto> Properties { get; set; } = [];
+        public DateTime CreatedAt { get; set; }
+        public DateTime? UpdatedAt { get; set; }
     }
 }

@@ -13,27 +13,29 @@ namespace SMarket.Business.Services
     public class ProductService : IProductService
     {
         private readonly IProductRepository _productRepository;
+        private readonly IUserRepository _userRepository;
         private readonly ICustomMapper _mapper;
 
-        public ProductService(IProductRepository productRepository, ICustomMapper mapper)
+        public ProductService(IProductRepository productRepository, IUserRepository userRepository, ICustomMapper mapper)
         {
             _productRepository = productRepository;
+            _userRepository = userRepository;
             _mapper = mapper;
         }
 
-        public async Task<PagingResult<ProductItemDto>> GetListProductsAsync(ListProductSearchCondition searchCondition)
+        public async Task<PaginationResult<ProductItemDto>> GetListProductsAsync(ListProductSearchCondition searchCondition)
         {
+            var user = await _userRepository.GetAllAsync();
             var productsPaging = await _productRepository.GetListProductsAsync(searchCondition);
             var productDtos = _mapper.Map<Product, ProductItemDto>(productsPaging);
             var total = await _productRepository.GetCountProductsAsync(searchCondition);
-            var hasMore = searchCondition.Page * searchCondition.PageSize < total;
 
-            return new PagingResult<ProductItemDto>
-            {
-                Items = [.. productDtos],
-                Total = total,
-                HasMoreRecords = hasMore
-            };
+            return new PaginationResult<ProductItemDto>(
+                   currentPage: searchCondition.Page,
+                   pageSize: searchCondition.PageSize,
+                   totalItems: total,
+                   items: productDtos
+               );
         }
 
         public async Task<ProductItemDto> GetProductByIdAsync(int id)
@@ -45,6 +47,8 @@ namespace SMarket.Business.Services
 
         public async Task<ProductItemDto> GetProductBySlugAsync(string slug)
         {
+            var user = await _userRepository.GetAllAsync();
+
             var product = await _productRepository.GetProductBySlugAsync(slug)
                 ?? throw new NotFoundException("Product not found");
             return _mapper.Map<Product, ProductItemDto>(product);

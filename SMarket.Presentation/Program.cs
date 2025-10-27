@@ -7,7 +7,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.ConfigureDbContext(builder.Configuration);
 builder.Services.ConfigureJwtAuthentication(builder.Configuration);
-builder.Services.ConfigureBusinessServices();
+builder.Services.ConfigureBusinessServices().AddCorsPolicies();
 
 builder.Services.AddControllers()
     .ConfigureApiBehaviorOptions(options =>
@@ -42,12 +42,12 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+app.UseCors("AllowAll");
 app.UseHttpsRedirection();
 
 app.UseAuthentication();
 app.UseMiddleware<JwtBlacklistMiddleware>();
 app.UseAuthorization();
-
 app.MapControllers();
 
 app.Run();

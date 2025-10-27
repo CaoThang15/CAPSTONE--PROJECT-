@@ -1,11 +1,11 @@
 ﻿namespace SMarket.Business.DTOs.Common
 {
-    public class Paging
+    public class PaginationMetadata
     {
         /// <summary>
         /// Trang hiện tại
         /// </summary>
-        public int CurrentPage { set; get; }
+        public int Page { set; get; }
 
         /// <summary>
         /// Tổng số trang hiển thị
@@ -13,71 +13,56 @@
         public int TotalPages { set; get; }
 
         /// <summary>
-        /// Số dòng tối đa trên 1 trang
+        /// Số dòng trên 1 trang
         /// </summary>
-        public int NumberOfRecord { set; get; }
+        public int PageSize { set; get; }
 
         /// <summary>
         /// Tổng số các dòng
         /// </summary>
-        public int TotalRecord { set; get; }
+        public int TotalItems { set; get; }
 
-        public Paging()
-        {
-            NumberOfRecord = 10;
-            TotalPages = 1;
-            CurrentPage = 1;
-            TotalRecord = 0;
-        }
-
-        public Paging(int TotalRecord, int CurrentPage, int NumberOfRecord = 30)
-        {
-            this.TotalRecord = TotalRecord;
-            this.NumberOfRecord = NumberOfRecord;
-            if (this.NumberOfRecord == 0)
-            {
-                this.NumberOfRecord = TotalRecord;
-            }
-            this.TotalPages = TotalRecord / this.NumberOfRecord + (TotalRecord % this.NumberOfRecord > 0 ? 1 : 0);
-            if (CurrentPage > this.TotalPages)
-            {
-                CurrentPage = this.TotalPages == 0 ? 1 : this.TotalPages;
-            }
-            if (CurrentPage < 1)
-            {
-                CurrentPage = 1;
-            }
-            this.CurrentPage = CurrentPage;
-        }
-    }
-
-    public class PagingResult<TEntity> where TEntity : class
-    {
-        public TEntity[] Items { get; set; }
-
+        /// <summary>
+        /// Còn dữ liệu để xem tiếp không
+        /// </summary>
         public bool HasMoreRecords { get; set; }
-
-        public int Total { get; set; }
-
-        public static PagingResult<TEntity> Empty
-        {
-            get
-            {
-                return new PagingResult<TEntity>
-                {
-                    Items = EmptyArray<TEntity>.Instance,
-                };
-            }
-        }
     }
 
-    public static class EmptyArray<T>
+    public class PaginationResult<TEntity> where TEntity : class
     {
-        private static readonly T[] InstanceInternal = new T[0];
+        public PaginationMetadata Metadata { get; set; }
+        public IEnumerable<TEntity> Items { get; set; }
 
-        public static T[] Instance
+        public PaginationResult()
         {
-            get { return InstanceInternal; }
+            Metadata = new PaginationMetadata();
+            Items = Enumerable.Empty<TEntity>();
         }
+
+        public PaginationResult(
+                  int currentPage,
+                  int pageSize,
+                  int totalItems,
+                  IEnumerable<TEntity> items)
+        {
+            this.Items = items ?? Enumerable.Empty<TEntity>();
+
+            var totalPages = (int)Math.Ceiling((double)totalItems / pageSize);
+            if (totalPages == 0) totalPages = 1;
+            if (currentPage < 1) currentPage = 1;
+            if (currentPage > totalPages) currentPage = totalPages;
+
+            Metadata = new PaginationMetadata
+            {
+                Page = currentPage,
+                PageSize = pageSize,
+                TotalItems = totalItems,
+                TotalPages = totalPages,
+                HasMoreRecords = currentPage < totalPages
+            };
+        }
+
+        public static PaginationResult<TEntity> Empty => new PaginationResult<TEntity>();
+
     }
 }

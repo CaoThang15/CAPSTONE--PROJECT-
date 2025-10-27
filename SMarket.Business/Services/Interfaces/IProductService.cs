@@ -6,7 +6,7 @@ namespace SMarket.Business.Services.Interfaces
 {
     public interface IProductService
     {
-        Task<PagingResult<ProductItemDto>> GetListProductsAsync(ListProductSearchCondition searchCondition);
+        Task<PaginationResult<ProductItemDto>> GetListProductsAsync(ListProductSearchCondition searchCondition);
         Task<ProductItemDto> GetProductByIdAsync(int id);
         Task<ProductItemDto> GetProductBySlugAsync(string slug);
         Task CreateProductAsync(CreateOrUpdateProductDto createProductDto);
