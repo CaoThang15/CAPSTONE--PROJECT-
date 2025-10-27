@@ -55,6 +55,7 @@ namespace SMarket.DataAccess.Context
                     .OnDelete(DeleteBehavior.Restrict);
             });
 
+
             modelBuilder.Entity<Order>(entity =>
             {
                 entity.HasOne(o => o.Status)
@@ -73,14 +74,6 @@ namespace SMarket.DataAccess.Context
                 entity.HasOne(c => c.Product)
                     .WithMany()
                     .HasForeignKey(c => c.ProductId)
-                    .OnDelete(DeleteBehavior.Restrict);
-            });
-
-            modelBuilder.Entity<OrderDetail>(entity =>
-            {
-                entity.HasOne<Product>()
-                    .WithMany()
-                    .HasForeignKey(od => od.ProductId)
                     .OnDelete(DeleteBehavior.Restrict);
             });
 

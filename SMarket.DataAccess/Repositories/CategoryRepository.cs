@@ -1,6 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using SMarket.DataAccess.Context;
-using SMarket.DataAccess.DTOs.Common;
+using SMarket.DataAccess.Common;
 using SMarket.DataAccess.Models;
 using SMarket.DataAccess.Repositories.Interfaces;
 

@@ -1,5 +1,6 @@
 using SMarket.Business.DTOs;
 using SMarket.Business.DTOs.Cart;
+using SMarket.Business.DTOs.Order;
 using SMarket.Business.DTOs.Product;
 using SMarket.Business.DTOs.Voucher;
 using SMarket.DataAccess.Models;
@@ -148,6 +149,31 @@ namespace SMarket.Business.Mappers
             if (sourceType == typeof(CreateOrUpdateProductDto) && destinationType == typeof(List<ProductProperty>))
             {
                 MapCreateProductDtoToProperties((CreateOrUpdateProductDto)(object)source!, (List<ProductProperty>)(object)destination!);
+                return true;
+            }
+
+            // Order mappings
+            if (sourceType == typeof(Order) && destinationType == typeof(OrderDto))
+            {
+                MapOrderToDto((Order)(object)source!, (OrderDto)(object)destination!);
+                return true;
+            }
+
+            if (sourceType == typeof(CreateOrUpdateOrder) && destinationType == typeof(Order))
+            {
+                MapCreateOrderDtoToOrder((CreateOrUpdateOrder)(object)source!, (Order)(object)destination!);
+                return true;
+            }
+
+            if (sourceType == typeof(CreateOrUpdateOrder) && destinationType == typeof(List<OrderDetail>))
+            {
+                MapCreateOrderDtoToOrderDetails((CreateOrUpdateOrder)(object)source!, (List<OrderDetail>)(object)destination!);
+                return true;
+            }
+
+            if (sourceType == typeof(OrderStatus) && destinationType == typeof(OrderStatusDto))
+            {
+                MapOrderStatusToDto((OrderStatus)(object)source!, (OrderStatusDto)(object)destination!);
                 return true;
             }
 
@@ -423,7 +449,7 @@ namespace SMarket.Business.Mappers
             }
         }
 
-        private void MapCreateProductDtoToProperties(CreateOrUpdateProductDto createDto, List<ProductProperty> properties)
+        private static void MapCreateProductDtoToProperties(CreateOrUpdateProductDto createDto, List<ProductProperty> properties)
         {
             properties.Clear();
             foreach (var property in createDto.Properties)
@@ -438,6 +464,84 @@ namespace SMarket.Business.Mappers
             }
         }
 
+        #endregion
+
+        #region Order Mappings
+
+        private static void MapOrderToDto(Order order, OrderDto orderDto)
+        {
+            orderDto.Id = order.Id;
+            orderDto.OrderDate = order.OrderDate;
+            orderDto.DeliveryDate = order.DeliveryDate;
+            orderDto.ShippingAddress = order.ShippingAddress;
+            orderDto.WardId = order.WardId;
+            orderDto.PhoneNumber = order.PhoneNumber;
+            orderDto.PaymentMethod = order.PaymentMethod;
+            orderDto.TotalAmount = order.TotalAmount;
+            orderDto.UserId = order.UserId;
+            orderDto.UserName = order.User?.Name;
+            orderDto.StatusId = order.StatusId;
+            orderDto.StatusName = order.Status?.Name;
+            orderDto.VoucherId = order.VoucherId;
+            orderDto.DiscountAmount = order.Voucher?.DiscountAmount;
+            orderDto.OrderDetails = [];
+            foreach (var orderDetails in order.OrderDetails)
+            {
+                if (orderDetails != null)
+                {
+                    orderDto.SellerId = orderDetails?.Product?.SellerId;
+                    orderDto.SellerName = orderDetails?.Product?.Seller?.Name;
+
+                    orderDto.OrderDetails.Add(new OrderDetailDto
+                    {
+                        Id = orderDetails!.Id,
+                        ProductId = orderDetails.ProductId,
+                        ProductName = orderDetails.Product?.Name,
+                        ProductImagePath = orderDetails.Product?.SharedFiles.First().Path,
+                        ProductImageName = orderDetails.Product?.SharedFiles.First().Name,
+                        Quantity = orderDetails.Quantity,
+                        UnitPrice = orderDetails.UnitPrice,
+                        Discount = orderDetails.Discount,
+                    });
+                }
+            }
+        }
+
+        private static void MapOrderStatusToDto(OrderStatus status, OrderStatusDto statusDto)
+        {
+            statusDto.Id = status.Id;
+            statusDto.Name = status.Name;
+        }
+
+        private static void MapCreateOrderDtoToOrder(CreateOrUpdateOrder createDto, Order order)
+        {
+            order.Id = createDto.Id ?? 0;
+            order.OrderDate = createDto.OrderDate;
+            order.DeliveryDate = createDto.DeliveryDate;
+            order.ShippingAddress = createDto.ShippingAddress;
+            order.WardId = createDto.WardId;
+            order.PhoneNumber = createDto.PhoneNumber;
+            order.PaymentMethod = createDto.PaymentMethod;
+            order.TotalAmount = createDto.TotalAmount;
+            order.UserId = createDto.UserId ?? 0;
+            order.StatusId = createDto.StatusId;
+            order.VoucherId = createDto.VoucherId;
+        }
+
+        private static void MapCreateOrderDtoToOrderDetails(CreateOrUpdateOrder createDto, List<OrderDetail> orderDetails)
+        {
+            orderDetails.Clear();
+            foreach (var item in createDto.OrderDetails)
+            {
+                orderDetails.Add(new OrderDetail
+                {
+                    ProductId = item.ProductId,
+                    Quantity = item.Quantity,
+                    UnitPrice = item.UnitPrice,
+                    Discount = item.Discount,
+                });
+            }
+        }
         #endregion
     }
 }

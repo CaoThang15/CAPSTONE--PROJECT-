@@ -1,7 +1,7 @@
 using SMarket.Business.DTOs;
 using SMarket.Business.Mappers;
 using SMarket.Business.Services.Interfaces;
-using SMarket.DataAccess.DTOs.Common;
+using SMarket.DataAccess.Common;
 using SMarket.DataAccess.Models;
 using SMarket.DataAccess.Repositories.Interfaces;
 
