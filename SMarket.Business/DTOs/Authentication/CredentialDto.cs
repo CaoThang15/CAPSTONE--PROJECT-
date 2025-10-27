@@ -12,8 +12,5 @@ namespace SMarket.Business.DTOs
         [Required]
         [MinLength(6)]
         public string Password { get; set; } = string.Empty;
-
-        [Required]
-        public RoleEnum Role { get; set; }
     }
 }

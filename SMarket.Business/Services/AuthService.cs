@@ -161,5 +161,62 @@ namespace SMarket.Business.Services
 
             response.Cookies.Append("access_token", "", cookieOptions);
         }
+
+        public string GeneratePasswordResetToken(string email)
+        {
+            var jwtSection = _configuration.GetSection("JwtSettings");
+            var tokenHandler = new JwtSecurityTokenHandler();
+            var key = Encoding.ASCII.GetBytes(jwtSection["SecretKey"] ?? throw new InvalidOperationException("JWT key is not configured"));
+
+            var tokenDescriptor = new SecurityTokenDescriptor
+            {
+                Subject = new ClaimsIdentity(
+                [
+                    new Claim("email", email),
+                    new Claim("type", "password_reset")
+                ]),
+                Expires = DateTime.UtcNow.AddMinutes(15),
+                Issuer = jwtSection["Issuer"],
+                Audience = jwtSection["Audience"],
+                SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
+            };
+
+            var token = tokenHandler.CreateToken(tokenDescriptor);
+            return tokenHandler.WriteToken(token);
+        }
+
+        public string? ValidatePasswordResetToken(string token)
+        {
+            try
+            {
+                var jwtSection = _configuration.GetSection("JwtSettings");
+                var tokenHandler = new JwtSecurityTokenHandler();
+                var key = Encoding.ASCII.GetBytes(jwtSection["SecretKey"] ?? throw new InvalidOperationException("JWT key is not configured"));
+
+                var validationParameters = new TokenValidationParameters
+                {
+                    ValidateIssuerSigningKey = true,
+                    IssuerSigningKey = new SymmetricSecurityKey(key),
+                    ValidateIssuer = true,
+                    ValidIssuer = jwtSection["Issuer"],
+                    ValidateAudience = true,
+                    ValidAudience = jwtSection["Audience"],
+                    ValidateLifetime = true,
+                    ClockSkew = TimeSpan.Zero
+                };
+
+                var principal = tokenHandler.ValidateToken(token, validationParameters, out SecurityToken validatedToken);
+
+                var tokenType = principal.FindFirst("type")?.Value;
+                if (tokenType != "password_reset")
+                    return null;
+
+                return principal.FindFirst(ClaimTypes.Email)?.Value;
+            }
+            catch
+            {
+                return null;
+            }
+        }
     }
 }
