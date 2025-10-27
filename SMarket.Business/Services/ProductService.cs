@@ -58,7 +58,7 @@ namespace SMarket.Business.Services
         {
             var product = _mapper.Map<CreateOrUpdateProductDto, Product>(createProductDto);
             var sharedFiles = _mapper.Map<CreateOrUpdateProductDto, List<SharedFile>>(createProductDto);
-            var properties = _mapper.Map<CreateOrUpdateProductDto, List<ProductProperty>>(createProductDto);
+            var properties = _mapper.Map<CreateOrUpdateProductDto, List<Property>>(createProductDto);
             await _productRepository.CreateProductAsync(product, sharedFiles, properties);
         }
 
@@ -67,7 +67,7 @@ namespace SMarket.Business.Services
             updateProductDto.Id = id;
             var product = _mapper.Map<CreateOrUpdateProductDto, Product>(updateProductDto);
             var sharedFiles = _mapper.Map<CreateOrUpdateProductDto, List<SharedFile>>(updateProductDto);
-            var properties = _mapper.Map<CreateOrUpdateProductDto, List<ProductProperty>>(updateProductDto);
+            var properties = _mapper.Map<CreateOrUpdateProductDto, List<Property>>(updateProductDto);
             await _productRepository.UpdateProductAsync(product, sharedFiles, properties);
         }
 

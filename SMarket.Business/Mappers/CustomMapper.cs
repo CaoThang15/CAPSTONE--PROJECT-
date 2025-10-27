@@ -88,13 +88,6 @@ namespace SMarket.Business.Mappers
                 return true;
             }
 
-            // CategoryProperty mappings
-            if (sourceType == typeof(CategoryProperty) && destinationType == typeof(CategoryPropertyDto))
-            {
-                MapCategoryPropertyToDto((CategoryProperty)(object)source!, (CategoryPropertyDto)(object)destination!);
-                return true;
-            }
-
             // Voucher mappings
             if (sourceType == typeof(Voucher) && destinationType == typeof(VoucherDto))
             {
@@ -147,9 +140,9 @@ namespace SMarket.Business.Mappers
                 return true;
             }
 
-            if (sourceType == typeof(CreateOrUpdateProductDto) && destinationType == typeof(List<ProductProperty>))
+            if (sourceType == typeof(CreateOrUpdateProductDto) && destinationType == typeof(List<Property>))
             {
-                MapCreateProductDtoToProperties((CreateOrUpdateProductDto)(object)source!, (List<ProductProperty>)(object)destination!);
+                MapCreateProductDtoToProperties((CreateOrUpdateProductDto)(object)source!, (List<Property>)(object)destination!);
                 return true;
             }
 
@@ -262,17 +255,6 @@ namespace SMarket.Business.Mappers
 
             if (!string.IsNullOrEmpty(updateDto.Slug))
                 category.Slug = updateDto.Slug;
-        }
-
-        #endregion
-
-        #region CategoryProperty Mappings
-
-        private void MapCategoryPropertyToDto(CategoryProperty property, CategoryPropertyDto propertyDto)
-        {
-            propertyDto.Id = property.Id;
-            propertyDto.Name = property.Name;
-            propertyDto.CategoryId = property.CategoryId;
         }
 
         #endregion
@@ -428,14 +410,13 @@ namespace SMarket.Business.Mappers
                     });
             }
             productDto.Properties = [];
-            foreach (var property in product.ProductProperties)
+            foreach (var property in product.Properties)
             {
-                productDto.Properties.Add(new ProductPropertyDto
+                productDto.Properties.Add(new PropertyDto
                 {
                     Id = property.Id,
                     Value = property.Value,
-                    PropertyId = property.PropertyId,
-                    PropertyName = property.Property?.Name,
+                    Name = property.Name,
                 });
             }
         }
@@ -469,17 +450,16 @@ namespace SMarket.Business.Mappers
             }
         }
 
-        private static void MapCreateProductDtoToProperties(CreateOrUpdateProductDto createDto, List<ProductProperty> properties)
+        private static void MapCreateProductDtoToProperties(CreateOrUpdateProductDto createDto, List<Property> properties)
         {
             properties.Clear();
             foreach (var property in createDto.Properties)
             {
-                properties.Add(new ProductProperty
+                properties.Add(new Property
                 {
                     Id = property.Id ?? 0,
                     Value = property.Value,
-                    PropertyId = property.PropertyId,
-                    ProductId = createDto.Id,
+                    Name = property.Name
                 });
             }
         }

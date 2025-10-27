@@ -29,6 +29,6 @@ namespace SMarket.Business.DTOs.Product
 
         public List<SharedFileDto> SharedFiles { get; set; } = [];
 
-        public List<ProductPropertyDto> Properties { get; set; } = [];
+        public List<PropertyDto> Properties { get; set; } = [];
     }
 }

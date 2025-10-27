@@ -32,8 +32,7 @@ namespace SMarket.DataAccess.Repositories
                 .Where(d => searchCondition.SellerId == 0 || searchCondition.SellerId == d.SellerId)
                 .Include(d => d.SharedFiles.Where(f => !f.IsDeleted))
                 .Include(d => d.Seller)
-                .Include(d => d.ProductProperties.Where(p => !p.IsDeleted && p.Property != null && !p.Property.IsDeleted))
-                .ThenInclude(p => p!.Property)
+                .Include(d => d.Properties.Where(p => !p.IsDeleted))
                 .AsQueryable();
 
             query = searchCondition.OrderBy?.ToLower() switch
@@ -80,8 +79,7 @@ namespace SMarket.DataAccess.Repositories
                 .Where(d => !d.IsDeleted && d.Id == id)
                 .Include(d => d.SharedFiles)
                 .Include(d => d.Seller)
-                .Include(d => d.ProductProperties)
-                .ThenInclude(p => p!.Property)
+                .Include(d => d.Properties)
                 .OrderByDescending(d => d.CreatedAt)
                 .FirstOrDefaultAsync();
         }
@@ -92,13 +90,12 @@ namespace SMarket.DataAccess.Repositories
                 .Where(d => !d.IsDeleted && d.Slug == slug)
                 .Include(d => d.Seller)
                 .Include(d => d.SharedFiles)
-                .Include(d => d.ProductProperties)
-                .ThenInclude(p => p!.Property)
+                .Include(d => d.Properties)
                 .OrderByDescending(d => d.CreatedAt)
                 .FirstOrDefaultAsync();
         }
 
-        public async Task CreateProductAsync(Product product, List<SharedFile> sharedFiles, List<ProductProperty> properties)
+        public async Task CreateProductAsync(Product product, List<SharedFile> sharedFiles, List<Property> properties)
         {
             var transaction = await _context.Database.BeginTransactionAsync();
             try
@@ -121,7 +118,7 @@ namespace SMarket.DataAccess.Repositories
                 {
                     property.ProductId = product.Id;
                     property.CreatedAt = DateTime.UtcNow;
-                    await _context.ProductProperties.AddAsync(property);
+                    await _context.Properties.AddAsync(property);
                 }
                 await _context.SaveChangesAsync();
                 await transaction.CommitAsync();
@@ -133,7 +130,7 @@ namespace SMarket.DataAccess.Repositories
             }
         }
 
-        public async Task UpdateProductAsync(Product product, List<SharedFile> sharedFiles, List<ProductProperty> properties)
+        public async Task UpdateProductAsync(Product product, List<SharedFile> sharedFiles, List<Property> properties)
         {
             var transaction = await _context.Database.BeginTransactionAsync();
             try
@@ -153,13 +150,13 @@ namespace SMarket.DataAccess.Repositories
                     await _context.SharedFiles.AddAsync(file);
                 }
 
-                var oldProperties = await _context.ProductProperties.Where(d => d.ProductId == product.Id).ToListAsync();
-                _context.ProductProperties.RemoveRange(oldProperties);
+                var oldProperties = await _context.Properties.Where(d => d.ProductId == product.Id).ToListAsync();
+                _context.Properties.RemoveRange(oldProperties);
                 foreach (var property in properties)
                 {
                     property.ProductId = product.Id;
                     property.CreatedAt = DateTime.UtcNow;
-                    await _context.ProductProperties.AddAsync(property);
+                    await _context.Properties.AddAsync(property);
                 }
                 await _context.SaveChangesAsync();
                 await transaction.CommitAsync();

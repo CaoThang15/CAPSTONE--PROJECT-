@@ -10,7 +10,6 @@ namespace SMarket.DataAccess.Context
         public DbSet<User> Users { get; set; }
         public DbSet<Role> Roles { get; set; }
         public DbSet<Product> Products { get; set; }
-        public DbSet<ProductProperty> ProductProperties { get; set; }
         public DbSet<Category> Categories { get; set; }
         public DbSet<CartItem> CartItems { get; set; }
         public DbSet<Order> Orders { get; set; }
@@ -23,7 +22,7 @@ namespace SMarket.DataAccess.Context
         public DbSet<Feedback> Feedbacks { get; set; }
         public DbSet<SystemNotification> SystemNotifications { get; set; }
         public DbSet<PersonalNotification> PersonalNotifications { get; set; }
-        public DbSet<CategoryProperty> Properties { get; set; }
+        public DbSet<Property> Properties { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -54,7 +53,6 @@ namespace SMarket.DataAccess.Context
                     .HasForeignKey(p => p.CategoryId)
                     .OnDelete(DeleteBehavior.Restrict);
             });
-
 
             modelBuilder.Entity<Order>(entity =>
             {
