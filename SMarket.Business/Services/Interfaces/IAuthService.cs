@@ -12,5 +12,7 @@ namespace SMarket.Business.Services.Interfaces
         DateTime GetTokenExpiry(string token);
         void SetTokenCookie(HttpResponse response, string token);
         void RemoveTokenCookie(HttpResponse response);
+        string GeneratePasswordResetToken(string email);
+        string? ValidatePasswordResetToken(string token);
     }
 }

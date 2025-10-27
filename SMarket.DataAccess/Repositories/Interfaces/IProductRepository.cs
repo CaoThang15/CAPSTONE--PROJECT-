@@ -12,6 +12,8 @@ namespace SMarket.DataAccess.Repositories.Interfaces
         Task CreateProductAsync(Product product, List<SharedFile> sharedFiles, List<ProductProperty> properties);
         Task UpdateProductAsync(Product product, List<SharedFile> sharedFiles, List<ProductProperty> properties);
         Task DeleteProductAsync(int id);
+        Task HideOrShowBySeller(int id, bool isHide);
+        Task HideOrShowByAdmin(int id, bool isHide);
         Task<string> GetUniqueProductSlug(long id, string name);
     }
 }

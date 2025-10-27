@@ -48,7 +48,6 @@ namespace SMarket.Presentation.Controllers
                 {
                     Email = registerDto.Email,
                     Password = registerDto.Password,
-                    Role = registerDto.Role
                 };
 
                 _authService.SendOtpToEmail(cred);
@@ -174,35 +173,20 @@ namespace SMarket.Presentation.Controllers
         }
 
         [HttpPost("forgot-password")]
-        public async Task<ActionResult<Response>> ForgotPassword(ForgotPasswordDto forgotPasswordDto)
+        public async Task<ActionResult<Response>> ForgotPassword(ForgotPasswordDto req)
         {
             try
             {
-                if (!ModelState.IsValid)
+                var user = await _userService.GetUserByEmailAsync(req.Email);
+
+                if (user != null)
                 {
-                    var errors = ModelState.Where(x => x.Value?.Errors.Count > 0).ToDictionary(kvp => kvp.Key, kvp => kvp.Value?.Errors.Select(e => e.ErrorMessage).ToArray() ?? Array.Empty<string>());
-                    return BadRequest(new Response
-                    {
-                        Message = "Invalid data.",
-                        Data = errors
-                    });
+                    _authService.SendOtpToEmail(new CredentialDto { Email = req.Email });
                 }
-
-                var user = await _userService.GetUserByEmailAsync(forgotPasswordDto.Email);
-
-                if (user == null)
-                {
-                    return BadRequest(new Response
-                    {
-                        Message = "User does not exist."
-                    });
-                }
-
-                _authService.SendOtpToEmail(new CredentialDto { Email = forgotPasswordDto.Email, Password = forgotPasswordDto.NewPassword });
 
                 return Ok(new Response
                 {
-                    Message = "OTP sent to email. Please verify to reset your password."
+                    Message = "Please check your email to reset your password."
                 });
             }
             catch (Exception ex)
@@ -227,11 +211,12 @@ namespace SMarket.Presentation.Controllers
                     return Unauthorized(new { message = "Invalid or expired OTP." });
                 }
 
-                await _userService.ChangePasswordAsync(cred.Email, cred.Password);
+                var resetToken = _authService.GeneratePasswordResetToken(req.Email);
 
                 return Ok(new Response
                 {
-                    Message = "You can now login with your new password.",
+                    Message = "OTP verified. You can now reset your password.",
+                    Data = new { ResetToken = resetToken }
                 });
             }
             catch (Exception ex)
@@ -239,6 +224,47 @@ namespace SMarket.Presentation.Controllers
                 return BadRequest(new Response
                 {
                     Message = "Failed to verify OTP.",
+                    Data = ex.Message
+                });
+            }
+        }
+
+        [HttpPost("reset-password")]
+        public async Task<ActionResult<Response>> ResetPassword(ResetPasswordDto req)
+        {
+            try
+            {
+                if (!ModelState.IsValid)
+                {
+                    var errors = ModelState.Where(x => x.Value?.Errors.Count > 0).ToDictionary(kvp => kvp.Key, kvp => kvp.Value?.Errors.Select(e => e.ErrorMessage).ToArray() ?? Array.Empty<string>());
+                    return BadRequest(new Response
+                    {
+                        Message = "Invalid data.",
+                        Data = errors
+                    });
+                }
+
+                var email = _authService.ValidatePasswordResetToken(req.ResetToken);
+                if (string.IsNullOrEmpty(email))
+                {
+                    return BadRequest(new Response
+                    {
+                        Message = "Invalid or expired reset token."
+                    });
+                }
+
+                await _userService.ChangePasswordAsync(email, req.NewPassword);
+
+                return Ok(new Response
+                {
+                    Message = "Password reset successful. You can now login with your new password."
+                });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new Response
+                {
+                    Message = "Failed to reset password.",
                     Data = ex.Message
                 });
             }

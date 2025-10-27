@@ -76,6 +76,16 @@ namespace SMarket.Business.Services
             await _productRepository.DeleteProductAsync(id);
         }
 
+        public async Task HideOrShowBySeller(int id, bool isHide)
+        {
+            await _productRepository.HideOrShowBySeller(id, isHide);
+        }
+
+        public async Task HideOrShowByAdmin(int id, bool isHide)
+        {
+            await _productRepository.HideOrShowByAdmin(id, isHide);
+        }
+
         public async Task<string> GetUniqueProductSlug(long id, string name)
         {
             return await _productRepository.GetUniqueProductSlug(id, name);

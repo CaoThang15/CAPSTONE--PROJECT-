@@ -49,7 +49,7 @@ namespace SMarket.Business.Services
 
         public async Task CreateOrderAsync(CreateOrUpdateOrder createDto, int userId)
         {
-            if (createDto.UserId == null || createDto.UserId == 0) createDto.UserId = userId;
+            createDto.UserId = userId;
             var order = _mapper.Map<CreateOrUpdateOrder, Order>(createDto);
             var orderDetails = _mapper.Map<CreateOrUpdateOrder, List<OrderDetail>>(createDto);
             await _orderRepository.CreateOrderAsync(order, orderDetails);
@@ -74,3 +74,4 @@ namespace SMarket.Business.Services
         }
     }
 }
+
