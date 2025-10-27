@@ -26,6 +26,7 @@ namespace SMarket.DataAccess.Repositories
                 .Where(d => condition.StatusId == 0 || condition.StatusId == d.StatusId)
                 .Where(d => condition.UserId == 0 || condition.UserId == d.UserId)
                 .Include(d => d.Status)
+                .OrderByDescending(c => c.CreatedAt)
                 .Skip((condition.Page - 1) * condition.PageSize)
                 .Take(condition.PageSize).ToListAsync();
         }
@@ -57,7 +58,7 @@ namespace SMarket.DataAccess.Repositories
 
         public async Task<IEnumerable<OrderStatus>> GetListOrderStatusesAsync()
         {
-            return await _context.OrderStatuses.Where(d => !d.IsDeleted).ToListAsync();
+            return await _context.OrderStatuses.Where(d => !d.IsDeleted).OrderBy(c => c.Id).ToListAsync();
         }
 
         public async Task CreateOrderAsync(Order order, List<OrderDetail> orderDetails)

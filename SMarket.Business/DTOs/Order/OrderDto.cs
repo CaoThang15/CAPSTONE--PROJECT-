@@ -18,6 +18,8 @@ namespace SMarket.Business.DTOs.Order
         public string? StatusName { get; set; }
         public int? VoucherId { get; set; }
         public float? DiscountAmount { get; set; }
+        public DateTime CreatedAt { get; set; }
+        public DateTime? UpdatedAt { get; set; }
         public List<OrderDetailDto> OrderDetails { get; set; } = [];
     }
 }
