@@ -1,7 +1,7 @@
 ﻿using System.Text;
 using System.Text.RegularExpressions;
 
-namespace SMarket.DataAccess.DTOs.Common
+namespace SMarket.DataAccess.Common
 {
     public class Helpers
     {
