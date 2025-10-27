@@ -12,6 +12,8 @@ namespace SMarket.Business.Services.Interfaces
         Task CreateProductAsync(CreateOrUpdateProductDto createProductDto);
         Task UpdateProductAsync(int cateId, CreateOrUpdateProductDto updateProductDto);
         Task DeleteProductAsync(int id);
+        Task HideOrShowBySeller(int id, bool isHide);
+        Task HideOrShowByAdmin(int id, bool isHide);
         Task<string> GetUniqueProductSlug(long id, string name);
     }
 }

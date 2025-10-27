@@ -1,4 +1,5 @@
 using SMarket.Business.DTOs;
+using SMarket.Business.Enums;
 using SMarket.Business.Mappers;
 using SMarket.Business.Services.Interfaces;
 using SMarket.DataAccess.Models;
@@ -42,7 +43,7 @@ namespace SMarket.Business.Services
                 Email = cred.Email,
                 Password = BCrypt.Net.BCrypt.HashPassword(cred.Password),
                 Name = $"User_{Guid.NewGuid().ToString().Substring(0, 8)}",
-                RoleId = (int)cred.Role
+                RoleId = (int)RoleEnum.Buyer
             };
 
             var user = await _userRepository.AddAsync(createUser);

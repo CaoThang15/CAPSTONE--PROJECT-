@@ -8,6 +8,7 @@ namespace SMarket.DataAccess.Models
         {
             SharedFiles = new HashSet<SharedFile>();
             OrderDetails = new HashSet<OrderDetail>();
+            Properties = new HashSet<Property>();
         }
 
         public int CategoryId { get; set; }
@@ -40,7 +41,8 @@ namespace SMarket.DataAccess.Models
 
         public ICollection<SharedFile> SharedFiles { get; set; }
 
-        public ICollection<ProductProperty> ProductProperties { get; set; }
+        public ICollection<Property> Properties { get; set; }
+
         public ICollection<OrderDetail> OrderDetails { get; set; }
     }
 }

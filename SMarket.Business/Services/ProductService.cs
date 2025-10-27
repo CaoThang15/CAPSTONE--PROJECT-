@@ -58,7 +58,7 @@ namespace SMarket.Business.Services
         {
             var product = _mapper.Map<CreateOrUpdateProductDto, Product>(createProductDto);
             var sharedFiles = _mapper.Map<CreateOrUpdateProductDto, List<SharedFile>>(createProductDto);
-            var properties = _mapper.Map<CreateOrUpdateProductDto, List<ProductProperty>>(createProductDto);
+            var properties = _mapper.Map<CreateOrUpdateProductDto, List<Property>>(createProductDto);
             await _productRepository.CreateProductAsync(product, sharedFiles, properties);
         }
 
@@ -67,13 +67,23 @@ namespace SMarket.Business.Services
             updateProductDto.Id = id;
             var product = _mapper.Map<CreateOrUpdateProductDto, Product>(updateProductDto);
             var sharedFiles = _mapper.Map<CreateOrUpdateProductDto, List<SharedFile>>(updateProductDto);
-            var properties = _mapper.Map<CreateOrUpdateProductDto, List<ProductProperty>>(updateProductDto);
+            var properties = _mapper.Map<CreateOrUpdateProductDto, List<Property>>(updateProductDto);
             await _productRepository.UpdateProductAsync(product, sharedFiles, properties);
         }
 
         public async Task DeleteProductAsync(int id)
         {
             await _productRepository.DeleteProductAsync(id);
+        }
+
+        public async Task HideOrShowBySeller(int id, bool isHide)
+        {
+            await _productRepository.HideOrShowBySeller(id, isHide);
+        }
+
+        public async Task HideOrShowByAdmin(int id, bool isHide)
+        {
+            await _productRepository.HideOrShowByAdmin(id, isHide);
         }
 
         public async Task<string> GetUniqueProductSlug(long id, string name)

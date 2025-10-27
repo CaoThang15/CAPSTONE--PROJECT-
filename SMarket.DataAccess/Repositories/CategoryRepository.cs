@@ -18,21 +18,18 @@ namespace SMarket.DataAccess.Repositories
         public async Task<IEnumerable<Category>> GetAllAsync()
         {
             return await _context.Categories
-                .Include(c => c.CategoryProperties)
                 .ToListAsync();
         }
 
         public async Task<Category?> GetByIdAsync(int id)
         {
             return await _context.Categories
-                .Include(c => c.CategoryProperties)
                 .FirstOrDefaultAsync(c => c.Id == id);
         }
 
         public async Task<Category?> GetBySlugAsync(string slug)
         {
             return await _context.Categories
-                .Include(c => c.CategoryProperties)
                 .FirstOrDefaultAsync(c => c.Slug == slug);
         }
 

@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using SMarket.DataAccess.Context;
@@ -11,9 +12,11 @@ using SMarket.DataAccess.Context;
 namespace SMarket.DataAccess.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251024172247_FixShareFileTable2")]
+    partial class FixShareFileTable2
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -89,6 +92,38 @@ namespace SMarket.DataAccess.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Categories");
+                });
+
+            modelBuilder.Entity("SMarket.DataAccess.Models.CategoryProperty", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int?>("CategoryId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CategoryId");
+
+                    b.ToTable("Properties");
                 });
 
             modelBuilder.Entity("SMarket.DataAccess.Models.Feedback", b =>
@@ -376,7 +411,7 @@ namespace SMarket.DataAccess.Migrations
                     b.ToTable("Products");
                 });
 
-            modelBuilder.Entity("SMarket.DataAccess.Models.Property", b =>
+            modelBuilder.Entity("SMarket.DataAccess.Models.ProductProperty", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -390,12 +425,10 @@ namespace SMarket.DataAccess.Migrations
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("boolean");
 
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(255)
-                        .HasColumnType("character varying(255)");
+                    b.Property<int?>("ProductId")
+                        .HasColumnType("integer");
 
-                    b.Property<int>("ProductId")
+                    b.Property<int?>("PropertyId")
                         .HasColumnType("integer");
 
                     b.Property<DateTime?>("UpdatedAt")
@@ -410,7 +443,9 @@ namespace SMarket.DataAccess.Migrations
 
                     b.HasIndex("ProductId");
 
-                    b.ToTable("Properties");
+                    b.HasIndex("PropertyId");
+
+                    b.ToTable("ProductProperties");
                 });
 
             modelBuilder.Entity("SMarket.DataAccess.Models.Role", b =>
@@ -704,6 +739,15 @@ namespace SMarket.DataAccess.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("SMarket.DataAccess.Models.CategoryProperty", b =>
+                {
+                    b.HasOne("SMarket.DataAccess.Models.Category", "Category")
+                        .WithMany("CategoryProperties")
+                        .HasForeignKey("CategoryId");
+
+                    b.Navigation("Category");
+                });
+
             modelBuilder.Entity("SMarket.DataAccess.Models.Feedback", b =>
                 {
                     b.HasOne("SMarket.DataAccess.Models.Product", "Product")
@@ -810,15 +854,19 @@ namespace SMarket.DataAccess.Migrations
                     b.Navigation("Seller");
                 });
 
-            modelBuilder.Entity("SMarket.DataAccess.Models.Property", b =>
+            modelBuilder.Entity("SMarket.DataAccess.Models.ProductProperty", b =>
                 {
                     b.HasOne("SMarket.DataAccess.Models.Product", "Product")
-                        .WithMany("Properties")
-                        .HasForeignKey("ProductId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .WithMany("ProductProperties")
+                        .HasForeignKey("ProductId");
+
+                    b.HasOne("SMarket.DataAccess.Models.CategoryProperty", "Property")
+                        .WithMany()
+                        .HasForeignKey("PropertyId");
 
                     b.Navigation("Product");
+
+                    b.Navigation("Property");
                 });
 
             modelBuilder.Entity("SMarket.DataAccess.Models.SharedFile", b =>
@@ -871,6 +919,8 @@ namespace SMarket.DataAccess.Migrations
 
             modelBuilder.Entity("SMarket.DataAccess.Models.Category", b =>
                 {
+                    b.Navigation("CategoryProperties");
+
                     b.Navigation("Products");
                 });
 
@@ -883,7 +933,7 @@ namespace SMarket.DataAccess.Migrations
                 {
                     b.Navigation("OrderDetails");
 
-                    b.Navigation("Properties");
+                    b.Navigation("ProductProperties");
 
                     b.Navigation("SharedFiles");
                 });
