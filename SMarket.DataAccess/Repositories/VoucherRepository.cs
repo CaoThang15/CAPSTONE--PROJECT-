@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Npgsql;
 using SMarket.DataAccess.Context;
 using SMarket.DataAccess.Models;
 using SMarket.DataAccess.Repositories.Interfaces;
@@ -198,12 +199,31 @@ namespace SMarket.DataAccess.Repositories
 
         public async Task IncrementUsageCountAsync(int voucherId)
         {
-            var voucher = await _context.Vouchers.FindAsync(voucherId);
-            if (voucher != null)
+            var rowsAffected = await _context.Database.ExecuteSqlRawAsync(
+                @"UPDATE ""Vouchers"" 
+                  SET ""UsageCount"" = ""UsageCount"" + 1, ""UpdatedAt"" = @updateTime
+                  WHERE ""Id"" = @voucherId 
+                    AND ""UsageCount"" < ""UsageLimit"" 
+                    AND ""IsDeleted"" = false",
+                new NpgsqlParameter("@voucherId", voucherId),
+                new NpgsqlParameter("@updateTime", DateTime.UtcNow)
+            );
+
+            if (rowsAffected == 0)
             {
-                voucher.UsageCount++;
-                voucher.UpdatedAt = DateTime.UtcNow;
-                await _context.SaveChangesAsync();
+                var voucher = await _context.Vouchers.FindAsync(voucherId);
+                if (voucher == null)
+                {
+                    throw new ArgumentException("Voucher not found");
+                }
+                else if (voucher.UsageCount >= voucher.UsageLimit)
+                {
+                    throw new InvalidOperationException("Voucher usage limit has been reached");
+                }
+                else
+                {
+                    throw new InvalidOperationException("Failed to increment voucher usage count");
+                }
             }
         }
     }

@@ -353,11 +353,27 @@ namespace SMarket.Presentation.Controllers
             }
         }
 
-        //TODO: after implementing Order feature
-        [HttpPost("apply")]
-        public async Task<ActionResult<Response>> ApplyVoucher(ApplyVoucherDto applyVoucherDto)
+        [HttpPost("validate")]
+        public async Task<ActionResult<Response>> ValidateVoucher(ApplyVoucherDto voucherDto)
         {
-            throw new NotImplementedException();
+            try
+            {
+                var result = await _voucherService.ValidateVoucherAsync(voucherDto.VoucherId);
+
+                return Ok(new Response
+                {
+                    Message = result.Message,
+                    Data = result
+                });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new Response
+                {
+                    Message = "Failed to check voucher availability.",
+                    Data = ex.Message
+                });
+            }
         }
     }
 }

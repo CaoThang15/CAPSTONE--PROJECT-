@@ -3,6 +3,7 @@ using SMarket.Business.Mappers;
 using SMarket.Business.Services.Interfaces;
 using SMarket.DataAccess.Models;
 using SMarket.DataAccess.Repositories.Interfaces;
+using SMarket.Utility.Enums;
 
 namespace SMarket.Business.Services
 {
@@ -171,16 +172,70 @@ namespace SMarket.Business.Services
             return _mapper.Map<VoucherStatus, VoucherStatusDto>(statuses);
         }
 
-        //TODO: after implementing Order feature
-        public async Task<VoucherApplicationResult> ApplyVoucherAsync(int userId, ApplyVoucherDto applyVoucherDto)
+        public async Task<VoucherApplicationResult> ValidateVoucherAsync(int voucherId)
         {
-            throw new NotImplementedException();
+            var voucher = await _voucherRepository.GetVoucherByIdAsync(voucherId);
+
+            if (voucher == null)
+            {
+                return new VoucherApplicationResult
+                {
+                    Message = "Voucher not found."
+                };
+            }
+
+            var voucherDto = _mapper.Map<Voucher, VoucherDto>(voucher);
+
+            if (voucher.StatusId != (int)VoucherStatuses.Active)
+            {
+                return new VoucherApplicationResult
+                {
+                    Message = "Voucher is not active.",
+                    Voucher = voucherDto
+                };
+            }
+
+            var now = DateTime.UtcNow;
+            if (now < voucher.StartDate)
+            {
+                return new VoucherApplicationResult
+                {
+                    Message = "Voucher is not yet valid.",
+                    Voucher = voucherDto
+                };
+            }
+
+            if (now > voucher.EndDate)
+            {
+                return new VoucherApplicationResult
+                {
+                    Message = "Voucher has expired.",
+                    Voucher = voucherDto
+                };
+            }
+
+            if (voucher.UsageCount >= voucher.UsageLimit)
+            {
+                return new VoucherApplicationResult
+                {
+                    Message = "Voucher usage limit has been reached.",
+                    Voucher = voucherDto
+                };
+            }
+
+            return new VoucherApplicationResult
+            {
+                Message = "Voucher is valid and available.",
+                Voucher = voucherDto
+            };
         }
 
-        //TODO: after implementing Order feature
-        public async Task<VoucherApplicationResult> ValidateVoucherAsync(string code)
+        public async Task ApplyVoucherAsync(int? voucherId)
         {
-            throw new NotImplementedException();
+            if (voucherId.HasValue)
+            {
+                await _voucherRepository.IncrementUsageCountAsync(voucherId.Value);
+            }
         }
     }
 }

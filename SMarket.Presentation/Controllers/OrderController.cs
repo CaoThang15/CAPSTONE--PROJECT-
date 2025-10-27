@@ -14,10 +14,12 @@ namespace SMarket.Presentation.Controllers
     public class OrderController : ControllerBase
     {
         private readonly IOrderService _orderService;
+        private readonly IVoucherService _voucherService;
 
-        public OrderController(IOrderService orderService)
+        public OrderController(IOrderService orderService, IVoucherService voucherService)
         {
             _orderService = orderService;
+            _voucherService = voucherService;
         }
 
         /// <summary>
@@ -163,6 +165,8 @@ namespace SMarket.Presentation.Controllers
                         Data = errors
                     });
                 }
+
+                await _voucherService.ApplyVoucherAsync(createDto.VoucherId);
 
                 await _orderService.CreateOrderAsync(createDto, userId);
 
