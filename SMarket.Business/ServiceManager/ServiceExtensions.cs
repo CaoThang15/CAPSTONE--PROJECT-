@@ -8,6 +8,7 @@ using SMarket.Business.Services;
 using SMarket.Business.Services.Interfaces;
 using SMarket.Business.Services.Workers;
 using SMarket.Business.Workers;
+using SMarket.DataAccess.Common;
 using SMarket.DataAccess.Context;
 using SMarket.DataAccess.Models;
 using SMarket.DataAccess.Repositories;
@@ -21,8 +22,14 @@ namespace SMarket.Business.ServiceManager
         public static IServiceCollection ConfigureDbContext(this IServiceCollection services, IConfiguration configuration)
         {
             services.AddDbContext<AppDbContext>(options =>
-                options.UseNpgsql(configuration.GetConnectionString("DefaultConnection"),
-                    b => b.MigrationsAssembly("SMarket.DataAccess")));
+                options.UseNpgsql(
+                    configuration.GetConnectionString("DefaultConnection"),
+                    npgsqlOptions =>
+                    {
+                        npgsqlOptions.MigrationsAssembly("SMarket.DataAccess");
+                        npgsqlOptions.UseVector();
+                    })
+            );
 
             return services;
         }
@@ -97,6 +104,7 @@ namespace SMarket.Business.ServiceManager
             services.AddScoped<IOrderService, OrderService>();
             services.AddScoped<IFeedbackService, FeedbackService>();
             services.AddScoped<IAIService, AIService>();
+            services.AddScoped<IEmbeddingService, EmbeddingService>();
 
             services.AddSingleton<IBackgroundTaskQueue, BackgroundTaskQueue>();
             services.AddHostedService<OtpWorker>();
@@ -109,6 +117,7 @@ namespace SMarket.Business.ServiceManager
             services.AddScoped<IProductRepository, ProductRepository>();
             services.AddScoped<IOrderRepository, OrderRepository>();
             services.AddScoped<IFeedbackRepository, FeedbackRepository>();
+            services.AddScoped<IVectorRepository, VectorRepository>();
 
             // Generic repositories
             services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
