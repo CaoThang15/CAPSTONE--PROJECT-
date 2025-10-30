@@ -13,9 +13,14 @@ namespace SMarket.DataAccess.Repositories
     {
         private readonly AppDbContext _context;
 
-        public ProductRepository(AppDbContext context)
+        private readonly IEmbeddingService _embeddingService;
+        private readonly IVectorRepository _vectorRepository;
+
+        public ProductRepository(AppDbContext context, IVectorRepository vectorRepository, IEmbeddingService embeddingService)
         {
             _context = context;
+            _vectorRepository = vectorRepository;
+            _embeddingService = embeddingService;
         }
 
         public async Task<IEnumerable<Product>> GetListProductsAsync(ListProductSearchCondition searchCondition)
@@ -107,6 +112,18 @@ namespace SMarket.DataAccess.Repositories
                 _context.Products.Add(product);
                 await _context.SaveChangesAsync();
 
+                var propertiesText = string.Join(", ", properties.Select(p => $"{p.Name}: {p.Value}"));
+                var textToEmbed = $@"
+                    Tên sản phẩm: {product.Name}
+                    Mô tả: {product.Description}
+                    Giá: {product.Price:N0} VND
+                    Tình trạng: {(product.IsNew ? "Mới" : "Đã qua sử dụng")}
+                    Thuộc tính: {propertiesText}
+                    ";
+
+                var embedding = await _embeddingService.CreateEmbeddingAsync(textToEmbed);
+                await _vectorRepository.UpsertProductVectorAsync(product, properties, embedding);
+
                 foreach (var file in sharedFiles)
                 {
                     file.ProductId = product.Id;
@@ -120,6 +137,7 @@ namespace SMarket.DataAccess.Repositories
                     property.CreatedAt = DateTime.UtcNow;
                     await _context.Properties.AddAsync(property);
                 }
+
                 await _context.SaveChangesAsync();
                 await transaction.CommitAsync();
             }
@@ -158,6 +176,18 @@ namespace SMarket.DataAccess.Repositories
                     property.CreatedAt = DateTime.UtcNow;
                     await _context.Properties.AddAsync(property);
                 }
+
+                var propertiesText = string.Join(", ", product.Properties.Select(p => $"{p.Name}: {p.Value}"));
+                var textToEmbed = $@"
+                    Tên sản phẩm: {product.Name}
+                    Mô tả: {product.Description}
+                    Giá: {product.Price:N0} VND
+                    Tình trạng: {(product.IsNew ? "Mới" : "Đã qua sử dụng")}
+                    Thuộc tính: {propertiesText}
+                    ";
+
+                var embedding = await _embeddingService.CreateEmbeddingAsync(textToEmbed);
+                await _vectorRepository.UpsertProductVectorAsync(product, properties, embedding);
                 await _context.SaveChangesAsync();
                 await transaction.CommitAsync();
             }
@@ -176,6 +206,13 @@ namespace SMarket.DataAccess.Repositories
                 product.IsDeleted = true;
                 product.UpdatedAt = DateTime.UtcNow;
                 await _context.SaveChangesAsync();
+
+                var vector = await _context.ProductVectors.FirstOrDefaultAsync(v => v.ProductId == id);
+                if (vector != null)
+                {
+                    _context.ProductVectors.Remove(vector);
+                    await _context.SaveChangesAsync();
+                }
             }
         }
 
