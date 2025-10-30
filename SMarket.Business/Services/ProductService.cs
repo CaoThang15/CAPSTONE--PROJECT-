@@ -56,7 +56,9 @@ namespace SMarket.Business.Services
 
         public async Task CreateProductAsync(CreateOrUpdateProductDto createProductDto)
         {
+            var productSlug = await this.GetUniqueProductSlug(0, createProductDto.Name);
             var product = _mapper.Map<CreateOrUpdateProductDto, Product>(createProductDto);
+            product.Slug = productSlug;
             var sharedFiles = _mapper.Map<CreateOrUpdateProductDto, List<SharedFile>>(createProductDto);
             var properties = _mapper.Map<CreateOrUpdateProductDto, List<Property>>(createProductDto);
             await _productRepository.CreateProductAsync(product, sharedFiles, properties);

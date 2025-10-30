@@ -177,17 +177,17 @@ namespace SMarket.DataAccess.Repositories
                     await _context.Properties.AddAsync(property);
                 }
 
-                var propertiesText = string.Join(", ", product.Properties.Select(p => $"{p.Name}: {p.Value}"));
-                var textToEmbed = $@"
-                    Tên sản phẩm: {product.Name}
-                    Mô tả: {product.Description}
-                    Giá: {product.Price:N0} VND
-                    Tình trạng: {(product.IsNew ? "Mới" : "Đã qua sử dụng")}
-                    Thuộc tính: {propertiesText}
-                    ";
+                //var propertiesText = string.Join(", ", product.Properties.Select(p => $"{p.Name}: {p.Value}"));
+                //var textToEmbed = $@"
+                //    Tên sản phẩm: {product.Name}
+                //    Mô tả: {product.Description}
+                //    Giá: {product.Price:N0} VND
+                //    Tình trạng: {(product.IsNew ? "Mới" : "Đã qua sử dụng")}
+                //    Thuộc tính: {propertiesText}
+                //    ";
 
-                var embedding = await _embeddingService.CreateEmbeddingAsync(textToEmbed);
-                await _vectorRepository.UpsertProductVectorAsync(product, properties, embedding);
+                //var embedding = await _embeddingService.CreateEmbeddingAsync(textToEmbed);
+                //await _vectorRepository.UpsertProductVectorAsync(product, properties, embedding);
                 await _context.SaveChangesAsync();
                 await transaction.CommitAsync();
             }
