@@ -5,6 +5,7 @@ using SMarket.DataAccess.Enums;
 using SMarket.DataAccess.Models;
 using SMarket.DataAccess.Repositories.Interfaces;
 using SMarket.DataAccess.SearchCondition;
+using SMarket.Utility.Enums;
 
 namespace SMarket.DataAccess.Repositories
 {
@@ -17,28 +18,152 @@ namespace SMarket.DataAccess.Repositories
             _context = context;
         }
 
-        public async Task<IEnumerable<Order>> GetListOrdersAsync(ListOrderSearchCondition condition)
+        public async Task<IEnumerable<Order>> GetListOrdersAsync(int userId, RoleType userRole, ListOrderSearchCondition condition)
         {
-            return await _context.Orders
-                .Where(d => !d.IsDeleted)
-                .Where(d => condition.PaymentMethodCode == null
-                    || ((PaymentMethod)condition.PaymentMethodCode).GetDescription() == d.PaymentMethod)
-                .Where(d => condition.StatusId == 0 || condition.StatusId == d.StatusId)
-                .Where(d => condition.UserId == 0 || condition.UserId == d.UserId)
-                .Include(d => d.Status)
-                .OrderByDescending(c => c.CreatedAt)
+            var query = _context.Orders
+                .Where(o => !o.IsDeleted)
+                .Include(o => o.Status)
+                .Include(o => o.User)
+                .Include(o => o.OrderDetails)
+                    .ThenInclude(od => od.Product)
+                .AsQueryable();
+
+            if (condition.PaymentMethodCode != null)
+            {
+                var method = ((PaymentMethod)condition.PaymentMethodCode).GetDescription();
+                query = query.Where(o => o.PaymentMethod == method);
+            }
+
+            if (condition.StatusId != 0)
+                query = query.Where(o => o.StatusId == condition.StatusId);
+
+
+            if (!string.IsNullOrEmpty(condition.Keyword))
+            {
+                query = query.Where(o =>
+                   o.User.Name.ToLower().Contains(condition.Keyword) ||
+                   o.OrderDetails.Any(od => od.Product.Name.ToLower().Contains(condition.Keyword)) ||
+                   o.Id.ToString().Contains(condition.Keyword));
+            }
+
+            if (userRole == RoleType.Seller)
+            {
+                // Seller can only see orders from their store
+                query = query.Where(o => o.OrderDetails.FirstOrDefault().Product.SellerId == userId);
+            }
+
+            return await query
+                .OrderByDescending(o => o.CreatedAt)
                 .Skip((condition.Page - 1) * condition.PageSize)
-                .Take(condition.PageSize).ToListAsync();
+                .Take(condition.PageSize)
+                .ToListAsync();
         }
 
-        public async Task<int> CountListOrdersAsync(ListOrderSearchCondition condition)
+        public async Task<int> CountListOrdersAsync(int userId, RoleType userRole, ListOrderSearchCondition condition)
         {
-            return await _context.Orders.Where(d => !d.IsDeleted)
-                .Where(d => condition.PaymentMethodCode == null
-                    || ((PaymentMethod)condition.PaymentMethodCode).GetDescription() == d.PaymentMethod)
-                .Where(d => condition.StatusId == 0 || condition.StatusId == d.StatusId)
-                .Where(d => condition.UserId == 0 || condition.UserId == d.UserId)
-                .CountAsync();
+            var query = _context.Orders
+                .Where(o => !o.IsDeleted)
+                .Include(o => o.Status)
+                .Include(o => o.User)
+                .Include(o => o.OrderDetails)
+                    .ThenInclude(od => od.Product)
+                    .ThenInclude(p => p.Seller)
+                .AsQueryable();
+
+            if (condition.PaymentMethodCode != null)
+            {
+                var method = ((PaymentMethod)condition.PaymentMethodCode).GetDescription();
+                query = query.Where(o => o.PaymentMethod == method);
+            }
+
+            if (condition.StatusId != 0)
+                query = query.Where(o => o.StatusId == condition.StatusId);
+
+            if (!string.IsNullOrEmpty(condition.Keyword))
+            {
+                query = query.Where(o =>
+                   o.User.Name.ToLower().Contains(condition.Keyword) ||
+                   o.OrderDetails.Any(od => od.Product.Name.ToLower().Contains(condition.Keyword)) ||
+                   o.Id.ToString().Contains(condition.Keyword));
+            }
+
+            if (userRole == RoleType.Seller)
+            {
+                // Seller can only see orders from their store
+                query = query.Where(o => o.OrderDetails.FirstOrDefault().Product.SellerId == userId);
+            }
+
+            return await query.CountAsync();
+        }
+
+        public async Task<IEnumerable<Order>> GetBuyerOrdersAsync(int userId, ListOrderSearchCondition condition)
+        {
+            var query = _context.Orders
+                .Where(o => !o.IsDeleted && o.UserId == userId)
+                .Include(o => o.Status)
+                .Include(o => o.User)
+                .Include(o => o.OrderDetails)
+                    .ThenInclude(od => od.Product)
+                    .ThenInclude(p => p!.Seller)
+                .AsQueryable();
+
+            if (condition.StatusId != 0)
+                query = query.Where(o => o.StatusId == condition.StatusId);
+
+            if (condition.PaymentMethodCode != null)
+            {
+                var method = ((PaymentMethod)condition.PaymentMethodCode).GetDescription();
+                query = query.Where(o => o.PaymentMethod == method);
+            }
+
+            if (!string.IsNullOrEmpty(condition.Keyword))
+            {
+                var keyword = condition.Keyword.ToLower();
+
+                query = query.Where(o =>
+                    o.User.Name.ToLower().Contains(keyword) ||
+                    o.OrderDetails.Any(od => od.Product.Name.ToLower().Contains(keyword)) ||
+                    o.Id.ToString().Contains(keyword));
+            }
+            return await query
+                .OrderByDescending(o => o.CreatedAt)
+                .Skip((condition.Page - 1) * condition.PageSize)
+                .Take(condition.PageSize)
+                .ToListAsync();
+        }
+
+        public async Task<int> CountBuyerOrdersAsync(int userId, ListOrderSearchCondition condition)
+        {
+            var query = _context.Orders
+               .Where(o => !o.IsDeleted && o.UserId == userId)
+               .Include(o => o.Status)
+                .Include(o => o.User)
+                .Include(o => o.OrderDetails)
+                    .ThenInclude(od => od.Product)
+                    .ThenInclude(p => p.Seller)
+                .AsQueryable();
+
+
+            if (condition.StatusId != 0)
+                query = query.Where(o => o.StatusId == condition.StatusId);
+
+            if (condition.PaymentMethodCode != null)
+            {
+                var method = ((PaymentMethod)condition.PaymentMethodCode).GetDescription();
+                query = query.Where(o => o.PaymentMethod == method);
+            }
+
+            if (!string.IsNullOrEmpty(condition.Keyword))
+            {
+                var keyword = condition.Keyword.ToLower();
+
+                query = query.Where(o =>
+                    o.User.Name.ToLower().Contains(keyword) ||
+                    o.OrderDetails.Any(od => od.Product.Name.ToLower().Contains(keyword)) ||
+                    o.Id.ToString().Contains(keyword));
+            }
+
+            return await query.CountAsync();
         }
 
         public async Task<Order?> GetOrderByIdAsync(int id)
@@ -61,13 +186,13 @@ namespace SMarket.DataAccess.Repositories
             return await _context.OrderStatuses.Where(d => !d.IsDeleted).OrderBy(c => c.Id).ToListAsync();
         }
 
-        public async Task CreateOrderAsync(Order order, List<OrderDetail> orderDetails)
+        public async Task<Order> CreateOrderAsync(Order order, List<OrderDetail> orderDetails)
         {
             var transaction = await _context.Database.BeginTransactionAsync();
             try
             {
                 order.CreatedAt = DateTime.UtcNow;
-                _context.Orders.Add(order);
+                var newOrder = _context.Orders.Add(order);
 
                 await _context.SaveChangesAsync();
 
@@ -80,6 +205,7 @@ namespace SMarket.DataAccess.Repositories
 
                 await _context.SaveChangesAsync();
                 await transaction.CommitAsync();
+                return newOrder.Entity;
             }
             catch
             {
@@ -117,7 +243,7 @@ namespace SMarket.DataAccess.Repositories
             }
         }
 
-        public async Task UpdateOrderStatusAsync(int id, int statusId)
+        public async Task<Order> UpdateOrderStatusAsync(int id, int statusId)
         {
             var order = await _context.Orders.FindAsync(id)
                 ?? throw new InvalidOperationException("Not Found Order."); ;
@@ -126,7 +252,11 @@ namespace SMarket.DataAccess.Repositories
                 order.StatusId = statusId;
                 order.UpdatedAt = DateTime.UtcNow;
                 await _context.SaveChangesAsync();
+                await _context.Entry(order)
+                .Reference(o => o.Status)
+                .LoadAsync();
             }
+            return order;
         }
 
         public async Task DeleteOrderAsync(int id)

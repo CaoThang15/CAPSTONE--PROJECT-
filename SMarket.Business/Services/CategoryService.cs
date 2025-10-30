@@ -38,17 +38,24 @@ namespace SMarket.Business.Services
 
         public async Task<CategoryDto> CreateCategoryAsync(CreateCategoryDto createCategoryDto)
         {
-            if (string.IsNullOrWhiteSpace(createCategoryDto.Slug))
-            {
-                createCategoryDto.Slug = Helpers.GenerateSlug(createCategoryDto.Name);
-            }
+            var existingCategories = await _categoryRepository.GetAllAsync();
+            var existingSlugs = existingCategories
+                .Select(c => c.Slug)
+                .Where(s => !string.IsNullOrEmpty(s))
+                .ToHashSet(StringComparer.OrdinalIgnoreCase);
+            var baseSlug = Helpers.GenerateSlug(createCategoryDto.Name);
+            var categorySlug = baseSlug;
+            int counter = 1;
 
-            if (await _categoryRepository.SlugExistsAsync(createCategoryDto.Slug))
+            while (existingSlugs.Contains(categorySlug))
             {
-                throw new InvalidOperationException($"Category with slug '{createCategoryDto.Slug}' already exists.");
+                categorySlug = $"{baseSlug}-{counter}";
+                counter++;
             }
 
             var category = _mapper.Map<CreateCategoryDto, Category>(createCategoryDto);
+            category.Slug = categorySlug;
+
             var createdCategory = await _categoryRepository.AddAsync(category);
             return _mapper.Map<Category, CategoryDto>(createdCategory);
         }
@@ -61,14 +68,15 @@ namespace SMarket.Business.Services
                 throw new ArgumentException($"Category with ID {cateId} not found.");
             }
 
-            if (string.IsNullOrWhiteSpace(updateCategoryDto.Slug))
-            {
-                updateCategoryDto.Slug = Helpers.GenerateSlug(updateCategoryDto.Name);
-            }
+            var newCategorySlug = Helpers.GenerateSlug(updateCategoryDto.Name);
+            // if (string.IsNullOrWhiteSpace(updateCategoryDto.Slug))
+            // {
+            //     updateCategoryDto.Slug = Helpers.GenerateSlug(updateCategoryDto.Name);
+            // }
 
-            if (await _categoryRepository.SlugExistsAsync(updateCategoryDto.Slug, cateId))
+            if (await _categoryRepository.SlugExistsAsync(newCategorySlug, cateId))
             {
-                throw new InvalidOperationException($"Category with slug '{updateCategoryDto.Slug}' already exists.");
+                throw new InvalidOperationException($"Category with slug '{newCategorySlug}' already exists.");
             }
 
             _mapper.Map(updateCategoryDto, existingCategory);

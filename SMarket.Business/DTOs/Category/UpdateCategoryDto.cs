@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using SMarket.Business.DTOs.Product;
 
 namespace SMarket.Business.DTOs
 {
@@ -8,7 +9,6 @@ namespace SMarket.Business.DTOs
         [MaxLength(255)]
         public string Name { get; set; } = string.Empty;
 
-        [MaxLength(255)]
-        public string? Slug { get; set; }
+        public SharedFileDto? Thumbnail { get; set; }
     }
 }

@@ -19,6 +19,8 @@ namespace SMarket.Business.DTOs
         public string? Ward { get; set; }
 
         public int RoleId { get; set; }
+        
+        public DateTime CreatedAt { get; set; }
     }
 
     public class UserProfileDto

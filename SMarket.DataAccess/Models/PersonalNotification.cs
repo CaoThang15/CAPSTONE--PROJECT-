@@ -4,7 +4,7 @@ namespace SMarket.DataAccess.Models
 {
     public class PersonalNotification : BaseEntity
     {
-        public int SystemNotificationId { get; set; }
+        public int? SystemNotificationId { get; set; }
 
         [Required, MaxLength(50)]
         public int Type { get; set; } // General / Voucher / Order

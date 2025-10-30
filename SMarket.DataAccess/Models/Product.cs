@@ -21,6 +21,9 @@ namespace SMarket.DataAccess.Models
         [MaxLength(255)]
         public string? Slug { get; set; }
 
+        [MaxLength(255)]
+        public string? Location { get; set; }
+
         public string? Description { get; set; }
 
         public int StockQuantity { get; set; }

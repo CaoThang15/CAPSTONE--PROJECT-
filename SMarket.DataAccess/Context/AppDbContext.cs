@@ -23,10 +23,17 @@ namespace SMarket.DataAccess.Context
         public DbSet<SystemNotification> SystemNotifications { get; set; }
         public DbSet<PersonalNotification> PersonalNotifications { get; set; }
         public DbSet<Property> Properties { get; set; }
+        public DbSet<ProductVector> ProductVectors { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
+
+            modelBuilder.HasPostgresExtension("vector");
+
+            modelBuilder.Entity<ProductVector>()
+                .Property(v => v.Embedding)
+                .HasColumnType("vector(768)");
 
             modelBuilder.Entity<User>(entity =>
             {
@@ -52,6 +59,15 @@ namespace SMarket.DataAccess.Context
                     .WithMany(c => c.Products)
                     .HasForeignKey(p => p.CategoryId)
                     .OnDelete(DeleteBehavior.Restrict);
+            });
+
+            modelBuilder.Entity<Category>(entity =>
+            {
+                entity
+                    .HasOne(c => c.Thumbnail)
+                    .WithOne(f => f.Category)
+                    .HasForeignKey<Category>(c => c.ThumbnailId)
+                    .OnDelete(DeleteBehavior.SetNull);
             });
 
             modelBuilder.Entity<Order>(entity =>

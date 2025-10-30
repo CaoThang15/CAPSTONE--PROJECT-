@@ -1,3 +1,5 @@
+using SMarket.Business.DTOs.Product;
+
 namespace SMarket.Business.DTOs
 {
     public class CategoryDto
@@ -7,5 +9,7 @@ namespace SMarket.Business.DTOs
         public string? Name { get; set; } = string.Empty;
 
         public string? Slug { get; set; }
+
+        public SharedFileDto? Thumbnail { get; set; }
     }
 }

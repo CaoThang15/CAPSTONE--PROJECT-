@@ -132,7 +132,7 @@ namespace SMarket.Business.Services
             return _mapper.Map<Voucher, VoucherDto>(vouchers);
         }
 
-        public async Task AssignVoucherToUserAsync(int userId, int voucherId)
+        public async Task<VoucherDto> AssignVoucherToUserAsync(int userId, int voucherId)
         {
             var voucher = await _voucherRepository.GetVoucherByIdAsync(voucherId);
             if (voucher == null)
@@ -153,6 +153,7 @@ namespace SMarket.Business.Services
             };
 
             await _voucherRepository.AssignVoucherToUserAsync(userVoucher);
+            return _mapper.Map<Voucher, VoucherDto>(voucher);
         }
 
         public async Task RemoveVoucherFromUserAsync(int userId, int voucherId)
