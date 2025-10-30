@@ -82,6 +82,7 @@ namespace SMarket.Business.ServiceManager
             services.AddScoped<ICustomMapper, CustomMapper>();
 
             services.AddHttpContextAccessor();
+            services.AddHttpClient<IAIService, AIService>();
 
             services.AddScoped<IAuthService, AuthService>();
             services.AddScoped<IUserService, UserService>();
@@ -95,6 +96,7 @@ namespace SMarket.Business.ServiceManager
             services.AddScoped<IProductService, ProductService>();
             services.AddScoped<IOrderService, OrderService>();
             services.AddScoped<IFeedbackService, FeedbackService>();
+            services.AddScoped<IAIService, AIService>();
 
             services.AddSingleton<IBackgroundTaskQueue, BackgroundTaskQueue>();
             services.AddHostedService<OtpWorker>();

@@ -1,6 +1,5 @@
 using SMarket.Business.DTOs.Common;
 using SMarket.Business.DTOs.Feedback;
-using SMarket.Business.DTOs.Product;
 using SMarket.DataAccess.SearchCondition;
 
 namespace SMarket.Business.Services.Interfaces
