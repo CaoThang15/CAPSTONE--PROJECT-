@@ -12,7 +12,7 @@ namespace SMarket.Business.Services.Interfaces
         Task DeleteVoucherAsync(int id);
         Task<IEnumerable<VoucherDto>> GetActiveVouchersAsync();
         Task<IEnumerable<VoucherDto>> GetUserVouchersAsync(int userId);
-        Task AssignVoucherToUserAsync(int userId, int voucherId);
+        Task<VoucherDto> AssignVoucherToUserAsync(int userId, int voucherId);
         Task RemoveVoucherFromUserAsync(int userId, int voucherId);
         Task<IEnumerable<VoucherStatusDto>> GetVoucherStatusesAsync();
         Task<VoucherApplicationResult> ValidateVoucherAsync(int voucherId);

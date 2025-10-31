@@ -2,9 +2,11 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SMarket.Business.DTOs.Order;
+using SMarket.Business.Enums;
 using SMarket.Business.Services.Interfaces;
 using SMarket.DataAccess.SearchCondition;
 using SMarket.Utility;
+using SMarket.Utility.Enums;
 
 namespace SMarket.Presentation.Controllers
 {
@@ -15,11 +17,13 @@ namespace SMarket.Presentation.Controllers
     {
         private readonly IOrderService _orderService;
         private readonly IVoucherService _voucherService;
+        private readonly INotificationService _notificationService;
 
-        public OrderController(IOrderService orderService, IVoucherService voucherService)
+        public OrderController(IOrderService orderService, IVoucherService voucherService, INotificationService notificationService)
         {
             _orderService = orderService;
             _voucherService = voucherService;
+            _notificationService = notificationService;
         }
 
         /// <summary>
@@ -28,29 +32,7 @@ namespace SMarket.Presentation.Controllers
         /// Truyền vào Page &gt;= 1.
         /// </summary>
         [HttpGet]
-        public async Task<ActionResult<Response>> SearchOrders([FromQuery] ListOrderSearchCondition searchCondition)
-        {
-            try
-            {
-                var orders = await _orderService.GetListOrdersAsync(searchCondition);
-
-                return Ok(new Response
-                {
-                    Message = "Orders retrieved successfully.",
-                    Data = orders
-                });
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(new Response
-                {
-                    Message = "Failed to retrieve orders.",
-                    Data = ex.Message
-                });
-            }
-        }
-
-        [HttpGet("user")]
+        [Authorize(Roles = nameof(RoleType.Admin) + "," + nameof(RoleType.Seller))]
         public async Task<ActionResult<Response>> SearchOrdersOfUser([FromQuery] ListOrderSearchCondition searchCondition)
         {
             try
@@ -64,8 +46,16 @@ namespace SMarket.Presentation.Controllers
                     });
                 }
 
-                searchCondition.UserId = userId;
-                var orders = await _orderService.GetListOrdersAsync(searchCondition);
+                var userRoleClaim = User.FindFirst(ClaimTypes.Role)?.Value;
+                if (!Enum.TryParse(userRoleClaim, out RoleType userRole))
+                {
+                    return Unauthorized(new Response
+                    {
+                        Message = "Invalid user role."
+                    });
+                }
+
+                var orders = await _orderService.GetListOrdersAsync(userId, userRole, searchCondition);
 
                 return Ok(new Response
                 {
@@ -83,6 +73,37 @@ namespace SMarket.Presentation.Controllers
             }
         }
 
+        [Authorize]
+        [HttpGet("my-orders")]
+        public async Task<ActionResult<Response>> GetMyOrders([FromQuery] ListOrderSearchCondition condition)
+        {
+            try
+            {
+                var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (!int.TryParse(userIdClaim, out var userId))
+                {
+                    return Unauthorized(new Response
+                    {
+                        Message = "Invalid user token."
+                    });
+                }
+                var result = await _orderService.GetBuyerOrdersAsync(userId, condition);
+
+                return Ok(new Response
+                {
+                    Message = "Buyer orders retrieved successfully.",
+                    Data = result
+                });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new Response
+                {
+                    Message = "Failed to retrieve buyer orders.",
+                    Data = ex.Message
+                });
+            }
+        }
         [HttpGet("{id}")]
         public async Task<ActionResult<Response>> GetOrderById(int id)
         {
@@ -168,7 +189,12 @@ namespace SMarket.Presentation.Controllers
 
                 await _voucherService.ApplyVoucherAsync(createDto.VoucherId);
 
-                await _orderService.CreateOrderAsync(createDto, userId);
+                var newOrder = await _orderService.CreateOrderAsync(createDto, userId);
+
+                await _notificationService.NotifyOrderPlaced(
+                    userId,
+                    newOrder.Id
+                );
 
                 return Ok(new Response
                 {
@@ -244,7 +270,13 @@ namespace SMarket.Presentation.Controllers
                     });
                 }
 
-                await _orderService.UpdateOrderStatusAsync(id, status);
+                var order = await _orderService.UpdateOrderStatusAsync(id, status);
+
+                await _notificationService.NotifyOrderStatusChanged(
+                    order.CustomerId,
+                    order.Id,
+                    order.StatusName
+                );
 
                 return Ok(new Response
                 {

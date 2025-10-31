@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
+using SMarket.Business.Hubs;
 using SMarket.Business.Mappers;
 using SMarket.Business.Services;
 using SMarket.Business.Services.Interfaces;
@@ -10,7 +11,6 @@ using SMarket.Business.Services.Workers;
 using SMarket.Business.Workers;
 using SMarket.DataAccess.Common;
 using SMarket.DataAccess.Context;
-using SMarket.DataAccess.Models;
 using SMarket.DataAccess.Repositories;
 using SMarket.DataAccess.Repositories.Interfaces;
 using System.Text;
@@ -105,10 +105,14 @@ namespace SMarket.Business.ServiceManager
             services.AddScoped<IFeedbackService, FeedbackService>();
             services.AddScoped<IAIService, AIService>();
             services.AddScoped<IEmbeddingService, EmbeddingService>();
+            services.AddScoped<INotificationService, NotificationService>();
+            services.AddSingleton<INotificationHub, NotificationHub>();
+            services.AddScoped<ISystemNotificationService, SystemNotificationService>();
 
             services.AddSingleton<IBackgroundTaskQueue, BackgroundTaskQueue>();
             services.AddHostedService<OtpWorker>();
             services.AddHostedService<TokenCleanupWorker>();
+            services.AddHostedService<SystemNotificationWorker>();
 
             services.AddScoped<IUserRepository, UserRepository>();
             services.AddScoped<ICategoryRepository, CategoryRepository>();
@@ -118,6 +122,8 @@ namespace SMarket.Business.ServiceManager
             services.AddScoped<IOrderRepository, OrderRepository>();
             services.AddScoped<IFeedbackRepository, FeedbackRepository>();
             services.AddScoped<IVectorRepository, VectorRepository>();
+            services.AddScoped<INotificationRepository, NotificationRepository>();
+            services.AddScoped<ISystemNotificationRepository, SystemNotificationRepository>();
 
             // Generic repositories
             services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
@@ -134,7 +140,8 @@ namespace SMarket.Business.ServiceManager
                     builder.WithOrigins("http://localhost:3000", "https://s-market-fpt.netlify.app/")
                             .AllowCredentials()
                             .AllowAnyMethod()
-                            .AllowAnyHeader();
+                            .AllowAnyHeader()
+                            .SetIsOriginAllowed(_ => true); // Allow SSE connections
                 });
             });
 

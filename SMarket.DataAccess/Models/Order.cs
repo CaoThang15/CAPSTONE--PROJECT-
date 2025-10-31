@@ -13,6 +13,12 @@ namespace SMarket.DataAccess.Models
         public DateTime? DeliveryDate { get; set; }
 
         [MaxLength(500)]
+        public string Name { get; set; }
+
+        [MaxLength(500)]
+        public string? Note { get; set; }
+
+        [MaxLength(500)]
         public string? ShippingAddress { get; set; }
 
         public int WardId { get; set; }
