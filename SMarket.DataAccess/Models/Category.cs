@@ -11,10 +11,12 @@ namespace SMarket.DataAccess.Models
 
         [Required, MaxLength(255)]
         public string? Name { get; set; }
-
         [MaxLength(255)]
         public string? Slug { get; set; }
 
         public ICollection<Product> Products { get; set; }
+        
+        public int? ThumbnailId { get; set; }
+        public SharedFile? Thumbnail { get; set; }
     }
 }

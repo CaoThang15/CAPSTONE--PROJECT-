@@ -13,5 +13,7 @@ namespace SMarket.DataAccess.Models
         public Product? Product { get; set; }
 
         public int? ProductId { get; set; }
+        
+        public Category? Category { get; set; }
     }
 }

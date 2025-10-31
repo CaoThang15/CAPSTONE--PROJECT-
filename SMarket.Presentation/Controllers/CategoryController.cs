@@ -107,7 +107,7 @@ namespace SMarket.Presentation.Controllers
         }
 
         [HttpPost]
-        // [Authorize(Roles = nameof(RoleType.Admin))]
+        [Authorize(Roles = nameof(RoleType.Admin))]
         public async Task<ActionResult<Response>> CreateCategory(CreateCategoryDto createCategoryDto)
         {
             try

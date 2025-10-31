@@ -61,6 +61,15 @@ namespace SMarket.DataAccess.Context
                     .OnDelete(DeleteBehavior.Restrict);
             });
 
+            modelBuilder.Entity<Category>(entity =>
+            {
+                entity
+                    .HasOne(c => c.Thumbnail)
+                    .WithOne(f => f.Category)
+                    .HasForeignKey<Category>(c => c.ThumbnailId)
+                    .OnDelete(DeleteBehavior.SetNull);
+            });
+
             modelBuilder.Entity<Order>(entity =>
             {
                 entity.HasOne(o => o.Status)

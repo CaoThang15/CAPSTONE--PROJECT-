@@ -14,10 +14,12 @@ namespace SMarket.Presentation.Controllers
     public class VoucherController : ControllerBase
     {
         private readonly IVoucherService _voucherService;
+        private readonly INotificationService _notificationService;
 
-        public VoucherController(IVoucherService voucherService)
+        public VoucherController(IVoucherService voucherService, INotificationService notificationService)
         {
             _voucherService = voucherService;
+            _notificationService = notificationService;
         }
 
         [HttpGet]
@@ -291,7 +293,13 @@ namespace SMarket.Presentation.Controllers
         {
             try
             {
-                await _voucherService.AssignVoucherToUserAsync(assignVoucherDto.UserId, assignVoucherDto.VoucherId);
+                var voucher = await _voucherService.AssignVoucherToUserAsync(assignVoucherDto.UserId, assignVoucherDto.VoucherId);
+
+                await _notificationService.NotifyVoucherAssigned(
+                    assignVoucherDto.UserId,
+                    assignVoucherDto.VoucherId,
+                    voucher.Code
+                );
 
                 return Ok(new Response
                 {
