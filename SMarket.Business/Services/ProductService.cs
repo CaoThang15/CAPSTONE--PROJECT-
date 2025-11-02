@@ -56,7 +56,9 @@ namespace SMarket.Business.Services
 
         public async Task CreateProductAsync(CreateOrUpdateProductDto createProductDto)
         {
+            var productSlug = await _productRepository.GetUniqueProductSlug(0, createProductDto.Name);
             var product = _mapper.Map<CreateOrUpdateProductDto, Product>(createProductDto);
+            product.Slug = productSlug;
             var sharedFiles = _mapper.Map<CreateOrUpdateProductDto, List<SharedFile>>(createProductDto);
             var properties = _mapper.Map<CreateOrUpdateProductDto, List<Property>>(createProductDto);
             await _productRepository.CreateProductAsync(product, sharedFiles, properties);
@@ -65,10 +67,22 @@ namespace SMarket.Business.Services
         public async Task UpdateProductAsync(int id, CreateOrUpdateProductDto updateProductDto)
         {
             updateProductDto.Id = id;
-            var product = _mapper.Map<CreateOrUpdateProductDto, Product>(updateProductDto);
+
+            var existingProduct = await _productRepository.GetProductByIdAsync(id);
+            if (existingProduct == null)
+            {
+                throw new NotFoundException("Product not found");
+            }
+
+            var productSlug = await _productRepository.GetUniqueProductSlug(id, updateProductDto.Name);
+
+            _mapper.Map(updateProductDto, existingProduct);
+            existingProduct.Slug = productSlug;
+
             var sharedFiles = _mapper.Map<CreateOrUpdateProductDto, List<SharedFile>>(updateProductDto);
             var properties = _mapper.Map<CreateOrUpdateProductDto, List<Property>>(updateProductDto);
-            await _productRepository.UpdateProductAsync(product, sharedFiles, properties);
+
+            await _productRepository.UpdateProductAsync(existingProduct, sharedFiles, properties);
         }
 
         public async Task DeleteProductAsync(int id)

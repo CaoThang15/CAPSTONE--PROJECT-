@@ -2,9 +2,9 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
-using Pgvector;
 using SMarket.DataAccess.Context;
 
 #nullable disable
@@ -12,16 +12,17 @@ using SMarket.DataAccess.Context;
 namespace SMarket.DataAccess.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251027160924_Add-Location-Product")]
+    partial class AddLocationProduct
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
                 .HasAnnotation("ProductVersion", "9.0.9")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
-            NpgsqlModelBuilderExtensions.HasPostgresExtension(modelBuilder, "vector");
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
             modelBuilder.Entity("SMarket.DataAccess.Models.CartItem", b =>
@@ -160,15 +161,6 @@ namespace SMarket.DataAccess.Migrations
 
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("boolean");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(500)
-                        .HasColumnType("character varying(500)");
-
-                    b.Property<string>("Note")
-                        .HasMaxLength(500)
-                        .HasColumnType("character varying(500)");
 
                     b.Property<DateTime>("OrderDate")
                         .HasColumnType("timestamp with time zone");
@@ -309,7 +301,7 @@ namespace SMarket.DataAccess.Migrations
                     b.Property<DateTime?>("SendAt")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<int?>("SystemNotificationId")
+                    b.Property<int>("SystemNotificationId")
                         .HasColumnType("integer");
 
                     b.Property<int>("ToUserId")
@@ -395,48 +387,6 @@ namespace SMarket.DataAccess.Migrations
                     b.HasIndex("SellerId");
 
                     b.ToTable("Products");
-                });
-
-            modelBuilder.Entity("SMarket.DataAccess.Models.ProductVector", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("Description")
-                        .HasColumnType("text");
-
-                    b.Property<Vector>("Embedding")
-                        .IsRequired()
-                        .HasColumnType("vector(768)")
-                        .HasColumnName("embedding");
-
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("boolean");
-
-                    b.Property<string>("Name")
-                        .HasColumnType("text");
-
-                    b.Property<decimal>("Price")
-                        .HasColumnType("numeric");
-
-                    b.Property<long>("ProductId")
-                        .HasColumnType("bigint");
-
-                    b.Property<string>("Properties")
-                        .HasColumnType("text");
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("product_vectors");
                 });
 
             modelBuilder.Entity("SMarket.DataAccess.Models.Property", b =>
@@ -849,7 +799,9 @@ namespace SMarket.DataAccess.Migrations
                 {
                     b.HasOne("SMarket.DataAccess.Models.SystemNotification", "SystemNotification")
                         .WithMany("PersonalNotifications")
-                        .HasForeignKey("SystemNotificationId");
+                        .HasForeignKey("SystemNotificationId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.HasOne("SMarket.DataAccess.Models.User", "ToUser")
                         .WithMany("PersonalNotifications")

@@ -153,9 +153,6 @@ namespace SMarket.DataAccess.Repositories
             var transaction = await _context.Database.BeginTransactionAsync();
             try
             {
-                if (await _context.Products.Where(d => d.Slug == product.Slug && d.Id != product.Id).AnyAsync())
-                    throw new InvalidOperationException("Slug already exists for another product.");
-
                 product.UpdatedAt = DateTime.UtcNow;
                 _context.Products.Update(product);
 

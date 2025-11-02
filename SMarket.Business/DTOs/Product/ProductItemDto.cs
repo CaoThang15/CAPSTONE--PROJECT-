@@ -16,6 +16,8 @@ namespace SMarket.Business.DTOs.Product
 
         public int StockQuantity { get; set; }
 
+        public string? Location { get; set; }
+
         public string? Note { get; set; }
 
         public bool IsNew { get; set; }

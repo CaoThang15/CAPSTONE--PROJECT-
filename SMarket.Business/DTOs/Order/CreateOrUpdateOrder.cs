@@ -5,6 +5,8 @@ namespace SMarket.Business.DTOs.Order
         public int? Id { get; set; }
         public DateTime OrderDate { get; set; }
         public DateTime? DeliveryDate { get; set; }
+        public string Name { get; set; }
+        public string? Note { get; set; }
         public string? ShippingAddress { get; set; }
         public int WardId { get; set; }
         public string? PhoneNumber { get; set; }

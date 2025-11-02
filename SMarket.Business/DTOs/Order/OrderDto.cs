@@ -7,13 +7,15 @@ namespace SMarket.Business.DTOs.Order
         public DateTime? DeliveryDate { get; set; }
         public string? ShippingAddress { get; set; }
         public int WardId { get; set; }
+        public string? Name { get; set; }
+        public string? Note { get; set; }
         public string? PhoneNumber { get; set; }
         public string? PaymentMethod { get; set; }
         public decimal TotalAmount { get; set; }
-        public int UserId { get; set; }
-        public string? UserName { get; set; }
+        public int CustomerId { get; set; }
+        public UserDto? Customer { get; set; }
         public int? SellerId { get; set; }
-        public string? SellerName { get; set; }
+        public UserDto? Seller { get; set; }
         public int StatusId { get; set; }
         public string? StatusName { get; set; }
         public int? VoucherId { get; set; }

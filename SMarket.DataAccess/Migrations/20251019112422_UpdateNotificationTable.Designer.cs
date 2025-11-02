@@ -2,9 +2,9 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
-using Pgvector;
 using SMarket.DataAccess.Context;
 
 #nullable disable
@@ -12,16 +12,17 @@ using SMarket.DataAccess.Context;
 namespace SMarket.DataAccess.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251019112422_UpdateNotificationTable")]
+    partial class UpdateNotificationTable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
                 .HasAnnotation("ProductVersion", "9.0.9")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
-            NpgsqlModelBuilderExtensions.HasPostgresExtension(modelBuilder, "vector");
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
             modelBuilder.Entity("SMarket.DataAccess.Models.CartItem", b =>
@@ -85,18 +86,44 @@ namespace SMarket.DataAccess.Migrations
                         .HasMaxLength(255)
                         .HasColumnType("character varying(255)");
 
-                    b.Property<int?>("ThumbnailId")
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Categories");
+                });
+
+            modelBuilder.Entity("SMarket.DataAccess.Models.CategoryProperty", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
                         .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int?>("CategoryId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)");
 
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ThumbnailId")
-                        .IsUnique();
+                    b.HasIndex("CategoryId");
 
-                    b.ToTable("Categories");
+                    b.ToTable("Properties");
                 });
 
             modelBuilder.Entity("SMarket.DataAccess.Models.Feedback", b =>
@@ -115,31 +142,34 @@ namespace SMarket.DataAccess.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<int>("FileId")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("FromUserId")
+                        .HasColumnType("integer");
+
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("boolean");
-
-                    b.Property<int?>("ProductId")
-                        .HasColumnType("integer");
 
                     b.Property<int>("Rate")
                         .HasColumnType("integer");
 
-                    b.Property<int>("SharedFileId")
+                    b.Property<int?>("SharedFileId")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("ToUserId")
                         .HasColumnType("integer");
 
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<int?>("UserId")
-                        .HasColumnType("integer");
-
                     b.HasKey("Id");
 
-                    b.HasIndex("ProductId");
+                    b.HasIndex("FromUserId");
 
                     b.HasIndex("SharedFileId");
 
-                    b.HasIndex("UserId");
+                    b.HasIndex("ToUserId");
 
                     b.ToTable("Feedbacks");
                 });
@@ -160,15 +190,6 @@ namespace SMarket.DataAccess.Migrations
 
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("boolean");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(500)
-                        .HasColumnType("character varying(500)");
-
-                    b.Property<string>("Note")
-                        .HasMaxLength(500)
-                        .HasColumnType("character varying(500)");
 
                     b.Property<DateTime>("OrderDate")
                         .HasColumnType("timestamp with time zone");
@@ -360,10 +381,6 @@ namespace SMarket.DataAccess.Migrations
                     b.Property<bool>("IsNew")
                         .HasColumnType("boolean");
 
-                    b.Property<string>("Location")
-                        .HasMaxLength(255)
-                        .HasColumnType("character varying(255)");
-
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(255)
@@ -397,49 +414,7 @@ namespace SMarket.DataAccess.Migrations
                     b.ToTable("Products");
                 });
 
-            modelBuilder.Entity("SMarket.DataAccess.Models.ProductVector", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("Description")
-                        .HasColumnType("text");
-
-                    b.Property<Vector>("Embedding")
-                        .IsRequired()
-                        .HasColumnType("vector(768)")
-                        .HasColumnName("embedding");
-
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("boolean");
-
-                    b.Property<string>("Name")
-                        .HasColumnType("text");
-
-                    b.Property<decimal>("Price")
-                        .HasColumnType("numeric");
-
-                    b.Property<long>("ProductId")
-                        .HasColumnType("bigint");
-
-                    b.Property<string>("Properties")
-                        .HasColumnType("text");
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("product_vectors");
-                });
-
-            modelBuilder.Entity("SMarket.DataAccess.Models.Property", b =>
+            modelBuilder.Entity("SMarket.DataAccess.Models.ProductProperty", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -453,12 +428,10 @@ namespace SMarket.DataAccess.Migrations
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("boolean");
 
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(255)
-                        .HasColumnType("character varying(255)");
+                    b.Property<int?>("ProductId")
+                        .HasColumnType("integer");
 
-                    b.Property<int>("ProductId")
+                    b.Property<int?>("PropertyId")
                         .HasColumnType("integer");
 
                     b.Property<DateTime?>("UpdatedAt")
@@ -473,7 +446,9 @@ namespace SMarket.DataAccess.Migrations
 
                     b.HasIndex("ProductId");
 
-                    b.ToTable("Properties");
+                    b.HasIndex("PropertyId");
+
+                    b.ToTable("ProductProperties");
                 });
 
             modelBuilder.Entity("SMarket.DataAccess.Models.Role", b =>
@@ -767,37 +742,34 @@ namespace SMarket.DataAccess.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("SMarket.DataAccess.Models.Category", b =>
+            modelBuilder.Entity("SMarket.DataAccess.Models.CategoryProperty", b =>
                 {
-                    b.HasOne("SMarket.DataAccess.Models.SharedFile", "Thumbnail")
-                        .WithOne("Category")
-                        .HasForeignKey("SMarket.DataAccess.Models.Category", "ThumbnailId")
-                        .OnDelete(DeleteBehavior.SetNull);
+                    b.HasOne("SMarket.DataAccess.Models.Category", "Category")
+                        .WithMany("CategoryProperties")
+                        .HasForeignKey("CategoryId");
 
-                    b.Navigation("Thumbnail");
+                    b.Navigation("Category");
                 });
 
             modelBuilder.Entity("SMarket.DataAccess.Models.Feedback", b =>
                 {
-                    b.HasOne("SMarket.DataAccess.Models.Product", "Product")
+                    b.HasOne("SMarket.DataAccess.Models.User", "FromUser")
                         .WithMany()
-                        .HasForeignKey("ProductId");
+                        .HasForeignKey("FromUserId");
 
                     b.HasOne("SMarket.DataAccess.Models.SharedFile", "SharedFile")
                         .WithMany()
-                        .HasForeignKey("SharedFileId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("SharedFileId");
 
-                    b.HasOne("SMarket.DataAccess.Models.User", "User")
+                    b.HasOne("SMarket.DataAccess.Models.User", "ToUser")
                         .WithMany()
-                        .HasForeignKey("UserId");
+                        .HasForeignKey("ToUserId");
 
-                    b.Navigation("Product");
+                    b.Navigation("FromUser");
 
                     b.Navigation("SharedFile");
 
-                    b.Navigation("User");
+                    b.Navigation("ToUser");
                 });
 
             modelBuilder.Entity("SMarket.DataAccess.Models.Order", b =>
@@ -834,15 +806,13 @@ namespace SMarket.DataAccess.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("SMarket.DataAccess.Models.Product", "Product")
-                        .WithMany("OrderDetails")
+                    b.HasOne("SMarket.DataAccess.Models.Product", null)
+                        .WithMany()
                         .HasForeignKey("ProductId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("Order");
-
-                    b.Navigation("Product");
                 });
 
             modelBuilder.Entity("SMarket.DataAccess.Models.PersonalNotification", b =>
@@ -881,15 +851,19 @@ namespace SMarket.DataAccess.Migrations
                     b.Navigation("Seller");
                 });
 
-            modelBuilder.Entity("SMarket.DataAccess.Models.Property", b =>
+            modelBuilder.Entity("SMarket.DataAccess.Models.ProductProperty", b =>
                 {
                     b.HasOne("SMarket.DataAccess.Models.Product", "Product")
-                        .WithMany("Properties")
-                        .HasForeignKey("ProductId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .WithMany("ProductProperties")
+                        .HasForeignKey("ProductId");
+
+                    b.HasOne("SMarket.DataAccess.Models.CategoryProperty", "Property")
+                        .WithMany()
+                        .HasForeignKey("PropertyId");
 
                     b.Navigation("Product");
+
+                    b.Navigation("Property");
                 });
 
             modelBuilder.Entity("SMarket.DataAccess.Models.SharedFile", b =>
@@ -942,6 +916,8 @@ namespace SMarket.DataAccess.Migrations
 
             modelBuilder.Entity("SMarket.DataAccess.Models.Category", b =>
                 {
+                    b.Navigation("CategoryProperties");
+
                     b.Navigation("Products");
                 });
 
@@ -952,9 +928,7 @@ namespace SMarket.DataAccess.Migrations
 
             modelBuilder.Entity("SMarket.DataAccess.Models.Product", b =>
                 {
-                    b.Navigation("OrderDetails");
-
-                    b.Navigation("Properties");
+                    b.Navigation("ProductProperties");
 
                     b.Navigation("SharedFiles");
                 });
@@ -962,11 +936,6 @@ namespace SMarket.DataAccess.Migrations
             modelBuilder.Entity("SMarket.DataAccess.Models.Role", b =>
                 {
                     b.Navigation("Users");
-                });
-
-            modelBuilder.Entity("SMarket.DataAccess.Models.SharedFile", b =>
-                {
-                    b.Navigation("Category");
                 });
 
             modelBuilder.Entity("SMarket.DataAccess.Models.SystemNotification", b =>

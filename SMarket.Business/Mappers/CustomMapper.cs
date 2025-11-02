@@ -197,7 +197,7 @@ namespace SMarket.Business.Mappers
 
         #region User Mappings
 
-        private void MapUserToDto(User user, UserDto userDto)
+        private static void MapUserToDto(User user, UserDto userDto)
         {
             userDto.Id = user.Id;
             userDto.Name = user.Name;
@@ -208,6 +208,7 @@ namespace SMarket.Business.Mappers
             userDto.Ward = user.Ward;
             userDto.Province = user.Province;
             userDto.RoleId = user.RoleId;
+            userDto.CreatedAt = user.CreatedAt;
         }
 
         private void MapUpdateUserDtoToUser(UpdateUserDto updateUserDto, User user)
@@ -245,7 +246,14 @@ namespace SMarket.Business.Mappers
         private void MapCreateCategoryDtoToCategory(CreateCategoryDto createDto, Category category)
         {
             category.Name = createDto.Name;
-            category.Slug = createDto.Slug;
+            if (createDto.Thumbnail != null)
+            {
+                category.Thumbnail = new SharedFile
+                {
+                    Name = createDto.Thumbnail.Name,
+                    Path = createDto.Thumbnail.Path
+                };
+            }
         }
 
         private void MapUpdateCategoryDtoToCategory(UpdateCategoryDto updateDto, Category category)
@@ -253,8 +261,23 @@ namespace SMarket.Business.Mappers
             if (!string.IsNullOrEmpty(updateDto.Name))
                 category.Name = updateDto.Name;
 
-            if (!string.IsNullOrEmpty(updateDto.Slug))
-                category.Slug = updateDto.Slug;
+            if (updateDto.Thumbnail != null)
+            {
+                if (category.Thumbnail == null || category.ThumbnailId == null || category.ThumbnailId == 0)
+                {
+                    category.Thumbnail = new SharedFile
+                    {
+                        Name = updateDto.Thumbnail.Name,
+                        Path = updateDto.Thumbnail.Path
+                    };
+                }
+                else
+                {
+                    // Update the existing thumbnail entity
+                    category.Thumbnail.Name = updateDto.Thumbnail.Name;
+                    category.Thumbnail.Path = updateDto.Thumbnail.Path;
+                }
+            }
         }
 
         #endregion
@@ -387,6 +410,7 @@ namespace SMarket.Business.Mappers
             productDto.IsNew = product.IsNew;
             productDto.IsAdminHide = product.IsAdminHide;
             productDto.IsHide = product.IsHide;
+            productDto.Location = product.Location;
             productDto.SellerId = product.SellerId;
             productDto.SharedFiles = [];
             productDto.CreatedAt = product.CreatedAt;
@@ -427,10 +451,10 @@ namespace SMarket.Business.Mappers
             product.CategoryId = createDto.CategoryId;
             product.Name = createDto.Name;
             product.Price = createDto.Price;
-            product.Slug = createDto.Slug;
             product.Description = createDto.Description;
             product.StockQuantity = createDto.StockQuantity;
             product.Note = createDto.Note;
+            product.Location = createDto.Location;
             product.IsNew = createDto.IsNew;
             product.IsAdminHide = createDto.IsAdminHide;
             product.IsHide = createDto.IsHide;
@@ -478,8 +502,9 @@ namespace SMarket.Business.Mappers
             orderDto.PhoneNumber = order.PhoneNumber;
             orderDto.PaymentMethod = order.PaymentMethod;
             orderDto.TotalAmount = order.TotalAmount;
-            orderDto.UserId = order.UserId;
-            orderDto.UserName = order.User?.Name;
+            orderDto.CustomerId = order.UserId;
+            orderDto.Customer = new UserDto();
+            MapUserToDto(order.User!, orderDto.Customer);
             orderDto.StatusId = order.StatusId;
             orderDto.StatusName = order.Status?.Name;
             orderDto.VoucherId = order.VoucherId;
@@ -487,25 +512,28 @@ namespace SMarket.Business.Mappers
             orderDto.CreatedAt = order.CreatedAt;
             orderDto.UpdatedAt = order.UpdatedAt;
             orderDto.OrderDetails = [];
-            foreach (var orderDetails in order.OrderDetails)
-            {
-                if (orderDetails != null)
-                {
-                    orderDto.SellerId = orderDetails?.Product?.SellerId;
-                    orderDto.SellerName = orderDetails?.Product?.Seller?.Name;
+            orderDto.Seller = new UserDto();
 
-                    orderDto.OrderDetails.Add(new OrderDetailDto
-                    {
-                        Id = orderDetails!.Id,
-                        ProductId = orderDetails.ProductId,
-                        ProductName = orderDetails.Product?.Name,
-                        ProductImagePath = orderDetails.Product?.SharedFiles.First().Path,
-                        ProductImageName = orderDetails.Product?.SharedFiles.First().Name,
-                        Quantity = orderDetails.Quantity,
-                        UnitPrice = orderDetails.UnitPrice,
-                        Discount = orderDetails.Discount,
-                    });
+            if (order.OrderDetails != null && order.OrderDetails.Any())
+            {
+                var firstOrderDetail = order.OrderDetails.FirstOrDefault(od => od?.Product?.Seller != null);
+                if (firstOrderDetail != null)
+                {
+                    var seller = firstOrderDetail.Product!.Seller!;
+                    orderDto.SellerId = seller.Id;
+                    MapUserToDto(seller, orderDto.Seller!);
                 }
+                orderDto.OrderDetails = order.OrderDetails.Where(od => od != null).Select(od => new OrderDetailDto
+                {
+                    Id = od!.Id,
+                    ProductId = od.ProductId,
+                    ProductName = od.Product?.Name,
+                    ProductImagePath = od.Product?.SharedFiles.FirstOrDefault()?.Path,
+                    ProductImageName = od.Product?.SharedFiles.FirstOrDefault()?.Name,
+                    Quantity = od.Quantity,
+                    UnitPrice = od.UnitPrice,
+                    Discount = od.Discount,
+                }).ToList();
             }
         }
 
@@ -522,6 +550,8 @@ namespace SMarket.Business.Mappers
             order.DeliveryDate = createDto.DeliveryDate;
             order.ShippingAddress = createDto.ShippingAddress;
             order.WardId = createDto.WardId;
+            order.Name = createDto.Name;
+            order.Note = createDto.Note;
             order.PhoneNumber = createDto.PhoneNumber;
             order.PaymentMethod = createDto.PaymentMethod;
             order.TotalAmount = createDto.TotalAmount;

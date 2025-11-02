@@ -21,7 +21,7 @@ namespace SMarket.DataAccess.Context
 
             var optionsBuilder = new DbContextOptionsBuilder<AppDbContext>();
             optionsBuilder.UseNpgsql(connectionString,
-                b => b.MigrationsAssembly("SMarket.DataAccess"));
+                b => b.MigrationsAssembly("SMarket.DataAccess").UseVector());
 
             return new AppDbContext(optionsBuilder.Options);
         }
