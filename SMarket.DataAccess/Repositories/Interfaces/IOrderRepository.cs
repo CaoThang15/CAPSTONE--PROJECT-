@@ -12,7 +12,7 @@ namespace SMarket.DataAccess.Repositories.Interfaces
         Task<int> CountBuyerOrdersAsync(int userId, ListOrderSearchCondition condition);
         Task<IEnumerable<OrderStatus>> GetListOrderStatusesAsync();
         Task<Order?> GetOrderByIdAsync(int id);
-        Task<Order> CreateOrderAsync(Order order, List<OrderDetail> orderDetails);
+        Task<IEnumerable<Order>> CreateOrderAsync(Order order, List<OrderDetail> orderDetails);
         Task UpdateOrderAsync(Order order, List<OrderDetail> orderDetails);
         Task<Order> UpdateOrderStatusAsync(int id, int statusId);
         Task DeleteOrderAsync(int id);

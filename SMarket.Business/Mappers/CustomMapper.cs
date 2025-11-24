@@ -5,6 +5,7 @@ using SMarket.Business.DTOs.Order;
 using SMarket.Business.DTOs.Product;
 using SMarket.Business.DTOs.Voucher;
 using SMarket.DataAccess.Models;
+using SMarket.Utility.Enums;
 
 namespace SMarket.Business.Mappers
 {
@@ -241,6 +242,14 @@ namespace SMarket.Business.Mappers
             categoryDto.Id = category.Id;
             categoryDto.Name = category.Name;
             categoryDto.Slug = category.Slug;
+            if (category.Thumbnail != null)
+            {
+                categoryDto.Thumbnail = new SharedFileDto
+                {
+                    Name = category.Thumbnail.Name,
+                    Path = category.Thumbnail.Path
+                };
+            }
         }
 
         private void MapCreateCategoryDtoToCategory(CreateCategoryDto createDto, Category category)
@@ -496,6 +505,8 @@ namespace SMarket.Business.Mappers
         {
             orderDto.Id = order.Id;
             orderDto.OrderDate = order.OrderDate;
+            orderDto.Name = order.Name;
+            orderDto.Note = order.Note;
             orderDto.DeliveryDate = order.DeliveryDate;
             orderDto.ShippingAddress = order.ShippingAddress;
             orderDto.WardId = order.WardId;
@@ -508,7 +519,17 @@ namespace SMarket.Business.Mappers
             orderDto.StatusId = order.StatusId;
             orderDto.StatusName = order.Status?.Name;
             orderDto.VoucherId = order.VoucherId;
-            orderDto.DiscountAmount = order.Voucher?.DiscountAmount;
+            if (order.Voucher != null)
+            {
+                if (order.Voucher.DiscountType == "Fixed")
+                {
+                    orderDto.DiscountAmount = order.Voucher.DiscountAmount;
+                }
+                else
+                {
+                    orderDto.DiscountAmount = (float)order.TotalAmount * order.Voucher.DiscountAmount / 100;
+                }
+            }
             orderDto.CreatedAt = order.CreatedAt;
             orderDto.UpdatedAt = order.UpdatedAt;
             orderDto.OrderDetails = [];

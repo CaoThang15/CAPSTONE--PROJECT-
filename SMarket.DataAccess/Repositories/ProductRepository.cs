@@ -27,6 +27,7 @@ namespace SMarket.DataAccess.Repositories
         {
             var query = _context.Products
                 .Where(d => !d.IsDeleted)
+                .Where(d => d.StockQuantity > 0)
                 .Where(d => searchCondition.CategoryId == 0 || searchCondition.CategoryId == d.CategoryId)
                 .Where(d => string.IsNullOrEmpty(searchCondition.KeyWord) || d.Name.Contains(searchCondition.KeyWord))
                 .Where(d => searchCondition.MinPrice == null || searchCondition.MinPrice <= d.Price)
