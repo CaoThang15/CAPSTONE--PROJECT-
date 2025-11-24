@@ -189,16 +189,20 @@ namespace SMarket.Presentation.Controllers
 
                 await _voucherService.ApplyVoucherAsync(createDto.VoucherId);
 
-                var newOrder = await _orderService.CreateOrderAsync(createDto, userId);
+                var listNewOrders = await _orderService.CreateOrderAsync(createDto, userId);
 
-                await _notificationService.NotifyOrderPlaced(
-                    userId,
-                    newOrder.Id
-                );
+                foreach (var newOrder in listNewOrders)
+                {
+                    await _notificationService.NotifyOrderPlaced(
+                        userId,
+                        newOrder.Id
+                    );
+                }
 
                 return Ok(new Response
                 {
                     Message = "Order created successfully.",
+                    Data = listNewOrders
                 });
             }
             catch (Exception ex)

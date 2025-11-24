@@ -34,13 +34,13 @@ namespace SMarket.Business.Services
             return _mapper.Map<OrderStatus, OrderStatusDto>(statuses);
         }
 
-        public async Task<OrderDto> CreateOrderAsync(CreateOrUpdateOrder createDto, int userId)
+        public async Task<List<OrderDto>> CreateOrderAsync(CreateOrUpdateOrder createDto, int userId)
         {
             createDto.UserId = userId;
             var order = _mapper.Map<CreateOrUpdateOrder, Order>(createDto);
             var orderDetails = _mapper.Map<CreateOrUpdateOrder, List<OrderDetail>>(createDto);
             var newOrder = await _orderRepository.CreateOrderAsync(order, orderDetails);
-            return _mapper.Map<Order, OrderDto>(newOrder);
+            return _mapper.MapToList<Order, OrderDto>(newOrder);
         }
 
         public async Task UpdateOrderAsync(int id, CreateOrUpdateOrder updateDto)

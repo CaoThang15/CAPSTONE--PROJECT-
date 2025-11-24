@@ -12,7 +12,7 @@ namespace SMarket.Business.Services.Interfaces
         Task<PaginationResult<OrderDto>> GetBuyerOrdersAsync(int userId, ListOrderSearchCondition condition);
         Task<OrderDto?> GetOrderByIdAsync(int id);
         Task<IEnumerable<OrderStatusDto>> GetListOrderStatusesAsync();
-        Task<OrderDto> CreateOrderAsync(CreateOrUpdateOrder order, int userId);
+        Task<List<OrderDto>> CreateOrderAsync(CreateOrUpdateOrder order, int userId);
         Task UpdateOrderAsync(int id, CreateOrUpdateOrder order);
         Task<OrderDto> UpdateOrderStatusAsync(int id, int statusId);
         Task DeleteOrderAsync(int id);

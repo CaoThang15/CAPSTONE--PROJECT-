@@ -23,9 +23,14 @@ namespace SMarket.DataAccess.Repositories
             var query = _context.Orders
                 .Where(o => !o.IsDeleted)
                 .Include(o => o.Status)
+                .Include(d => d.Voucher)
                 .Include(o => o.User)
-                .Include(o => o.OrderDetails)
+                .Include(d => d.OrderDetails)
                     .ThenInclude(od => od.Product)
+                        .ThenInclude(p => p!.Seller)
+                .Include(d => d.OrderDetails)
+                    .ThenInclude(od => od.Product)
+                        .ThenInclude(p => p!.SharedFiles)
                 .AsQueryable();
 
             if (condition.PaymentMethodCode != null)
@@ -101,10 +106,14 @@ namespace SMarket.DataAccess.Repositories
             var query = _context.Orders
                 .Where(o => !o.IsDeleted && o.UserId == userId)
                 .Include(o => o.Status)
+                .Include(d => d.Voucher)
                 .Include(o => o.User)
-                .Include(o => o.OrderDetails)
+                .Include(d => d.OrderDetails)
                     .ThenInclude(od => od.Product)
-                    .ThenInclude(p => p!.Seller)
+                        .ThenInclude(p => p!.Seller)
+                .Include(d => d.OrderDetails)
+                    .ThenInclude(od => od.Product)
+                        .ThenInclude(p => p!.SharedFiles)
                 .AsQueryable();
 
             if (condition.StatusId != 0)
@@ -186,29 +195,70 @@ namespace SMarket.DataAccess.Repositories
             return await _context.OrderStatuses.Where(d => !d.IsDeleted).OrderBy(c => c.Id).ToListAsync();
         }
 
-        public async Task<Order> CreateOrderAsync(Order order, List<OrderDetail> orderDetails)
+        public async Task<IEnumerable<Order>> CreateOrderAsync(Order baseOrder, List<OrderDetail> orderDetails)
         {
             var transaction = await _context.Database.BeginTransactionAsync();
             try
             {
-                order.CreatedAt = DateTime.UtcNow;
-                var newOrder = _context.Orders.Add(order);
+                var orderProducts = await _context.Products
+                    .Where(p => orderDetails.Select(od => od.ProductId).Contains(p.Id))
+                    .ToListAsync();
 
-                await _context.SaveChangesAsync();
+                var productMap = orderProducts.ToDictionary(p => p.Id, p => p.SellerId);
 
-                foreach (var orderDetail in orderDetails)
+                var groupedDetails = orderDetails
+                .GroupBy(od => productMap[od.ProductId])
+                .ToList();
+
+                var createdOrders = new List<Order>();
+
+                foreach (var group in groupedDetails)
                 {
-                    orderDetail.OrderId = order.Id;
-                    orderDetail.CreatedAt = DateTime.UtcNow;
-                    await _context.OrderDetails.AddAsync(orderDetail);
+                    var sellerId = group.Key;
+
+                    var order = new Order
+                    {
+                        OrderDate = DateTime.UtcNow,
+                        DeliveryDate = baseOrder.DeliveryDate,
+                        Name = baseOrder.Name,
+                        Note = baseOrder.Note,
+                        ShippingAddress = baseOrder.ShippingAddress,
+                        WardId = baseOrder.WardId,
+                        PhoneNumber = baseOrder.PhoneNumber,
+                        PaymentMethod = baseOrder.PaymentMethod,
+                        UserId = baseOrder.UserId,
+                        StatusId = baseOrder.StatusId,
+                        VoucherId = baseOrder.VoucherId,
+                        CreatedAt = DateTime.UtcNow
+                    };
+
+                    await _context.Orders.AddAsync(order);
+                    await _context.SaveChangesAsync();
+
+                    // Step 4: Add order details for this seller
+                    foreach (var orderDetail in group)
+                    {
+                        orderDetail.OrderId = order.Id;
+                        orderDetail.CreatedAt = DateTime.UtcNow;
+                        await _context.OrderDetails.AddAsync(orderDetail);
+                    }
+
+                    // Step 5: Calculate total amount for this order
+                    order.TotalAmount = group.Sum(od =>
+                        (od.UnitPrice * od.Quantity) - (od.Discount ?? 0));
+
+                    await _context.SaveChangesAsync();
+
+                    // Step 6: Optionally load navigation properties (e.g., User)
+                    await _context.Entry(order).Reference(o => o.User).LoadAsync();
+
+                    createdOrders.Add(order);
                 }
 
-                await _context.SaveChangesAsync();
+                // Commit all orders
                 await transaction.CommitAsync();
-                await _context.Entry(newOrder.Entity)
-                .Reference(o => o.User)
-                .LoadAsync();
-                return newOrder.Entity;
+
+                return createdOrders;
             }
             catch
             {
