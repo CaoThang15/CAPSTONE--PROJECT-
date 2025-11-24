@@ -17,7 +17,7 @@ namespace SMarket.DataAccess.Models
 
         public Product? Product { get; set; }
 
-        public int? SharedFileId { get; set; }
+        public int SharedFileId { get; set; }
 
         public SharedFile? SharedFile { get; set; }
     }

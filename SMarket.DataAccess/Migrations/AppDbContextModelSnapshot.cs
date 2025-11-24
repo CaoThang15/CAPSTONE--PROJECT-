@@ -124,7 +124,7 @@ namespace SMarket.DataAccess.Migrations
                     b.Property<int>("Rate")
                         .HasColumnType("integer");
 
-                    b.Property<int?>("SharedFileId")
+                    b.Property<int>("SharedFileId")
                         .HasColumnType("integer");
 
                     b.Property<DateTime?>("UpdatedAt")
@@ -785,7 +785,9 @@ namespace SMarket.DataAccess.Migrations
 
                     b.HasOne("SMarket.DataAccess.Models.SharedFile", "SharedFile")
                         .WithMany()
-                        .HasForeignKey("SharedFileId");
+                        .HasForeignKey("SharedFileId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.HasOne("SMarket.DataAccess.Models.User", "User")
                         .WithMany()

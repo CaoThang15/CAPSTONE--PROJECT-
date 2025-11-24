@@ -15,14 +15,12 @@ namespace SMarket.Business.Services
         private readonly string _apiKey;
         private readonly IEmbeddingService _embeddingService;
         private readonly IVectorRepository _vectorRepository;
-        private readonly IProductRepository _productRepository;
         private readonly string _model;
 
-        public AIService(HttpClient httpClient, IConfiguration config, IEmbeddingService embeddingService, IVectorRepository vectorRepository, IProductRepository productRepository)
+        public AIService(HttpClient httpClient, IConfiguration config, IEmbeddingService embeddingService, IVectorRepository vectorRepository)
         {
             _embeddingService = embeddingService;
             _vectorRepository = vectorRepository;
-            _productRepository = productRepository;
             _httpClient = httpClient;
             _apiKey = config["Gemini:ApiKey"]
                 ?? throw new ArgumentNullException("Gemini:ApiKey", "Gemini API key is missing in configuration");
@@ -90,8 +88,7 @@ namespace SMarket.Business.Services
             var sb = new StringBuilder();
             foreach (var vector in vectors)
             {
-                var product = await _productRepository.GetProductByIdAsync((int)vector.ProductId);
-                sb.AppendLine($"- (Id:{vector.Id}) - (Name:{vector.Name}) - (LinkProduct:/product/{product?.Slug}) - {vector.Price:N0} VND");
+                sb.AppendLine($"- (Id:{vector.Id}) - (Name:{vector.Name}) - (ProductId:{vector.ProductId}) - {vector.Price:N0} VND");
                 sb.AppendLine($"{vector.Description}");
                 sb.AppendLine();
             }
@@ -102,7 +99,7 @@ namespace SMarket.Business.Services
 
                 Người dùng hỏi: {userMessage}
 
-                Hãy trả lời ngắn gọn, thân thiện, bằng tiếng Việt. Nếu có sản phẩm phù hợp, trả về LinkProduct dưới dạng markdown để người dùng xem. Không tự bịa thông tin.
+                Hãy trả lời ngắn gọn, thân thiện, bằng tiếng Việt. Nếu có sản phẩm phù hợp, trả về productId để người dùng xem. Không tự bịa thông tin.
                 ";
 
             var body = new

@@ -48,13 +48,7 @@ namespace SMarket.Business.Services
         public async Task CreateFeedbackAsync(CreateOrUpdateFeedbackDto createDto)
         {
             var feedback = _mapper.Map<CreateOrUpdateFeedbackDto, Feedback>(createDto);
-
-            SharedFile? sharedFile = null;
-            if (createDto.SharedFile != null)
-            {
-                sharedFile = _mapper.Map<CreateOrUpdateFeedbackDto, SharedFile>(createDto);
-            }
-
+            var sharedFile = _mapper.Map<CreateOrUpdateFeedbackDto, SharedFile>(createDto);
             await _feedbackRepository.CreateFeedbackAsync(feedback, sharedFile);
         }
 
