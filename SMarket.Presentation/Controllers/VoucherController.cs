@@ -256,7 +256,7 @@ namespace SMarket.Presentation.Controllers
         }
 
         [HttpGet("my-vouchers")]
-        [Authorize(Roles = nameof(RoleType.Buyer))]
+        [Authorize()]
         public async Task<ActionResult<Response>> GetMyVouchers()
         {
             try
@@ -379,76 +379,6 @@ namespace SMarket.Presentation.Controllers
                 return BadRequest(new Response
                 {
                     Message = "Failed to check voucher availability.",
-                    Data = ex.Message
-                });
-            }
-        }
-
-
-        [HttpPost("admin-assign")]
-        [Authorize(Roles = nameof(RoleType.Admin))]
-        public async Task<ActionResult<Response>> AssignVouchersToMultipleUser(AdminAssignVoucherDto assignVoucherDto)
-        {
-            try
-            {
-                var successfulAssignments = new List<object>();
-                var failedAssignments = new List<object>();
-
-                foreach (var voucherId in assignVoucherDto.VoucherIds)
-                {
-                    foreach (var userId in assignVoucherDto.UserIds)
-                    {
-                        try
-                        {
-                            var voucher = await _voucherService.AssignVoucherToUserAsync(userId, voucherId);
-
-                            try
-                            {
-                                await _notificationService.NotifyVoucherAssigned(
-                                    userId,
-                                    voucherId,
-                                    voucher.Code ?? $"VOUCHER-{voucherId}"
-                                );
-                            }
-                            catch (Exception notificationEx)
-                            {
-                                Console.WriteLine($"Failed to send notification for user {userId}, voucher {voucherId}: {notificationEx.Message}");
-                            }
-
-                            successfulAssignments.Add(new
-                            {
-                                userId,
-                                voucherId,
-                                voucherCode = voucher.Code,
-                                message = "Assigned successfully"
-                            });
-                        }
-                        catch (Exception ex)
-                        {
-                            failedAssignments.Add(new
-                            {
-                                userId,
-                                voucherId,
-                                error = ex.Message
-                            });
-                        }
-                    }
-                }
-
-                var totalAttempts = assignVoucherDto.UserIds.Count * assignVoucherDto.VoucherIds.Count;
-                var successCount = successfulAssignments.Count;
-                var failedCount = failedAssignments.Count;
-
-                return Ok(new Response
-                {
-                    Message = $"Assignment completed. {successCount}/{totalAttempts} successful, {failedCount} failed.",
-                });
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(new Response
-                {
-                    Message = "Failed to process voucher assignments.",
                     Data = ex.Message
                 });
             }

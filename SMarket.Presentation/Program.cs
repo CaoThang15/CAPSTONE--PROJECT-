@@ -4,6 +4,9 @@ using SMarket.Business.Middleware;
 using System.Reflection;
 
 var builder = WebApplication.CreateBuilder(args);
+builder.Configuration
+    .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+    .AddJsonFile($"appsettings.{builder.Environment.EnvironmentName}.json", optional: true);
 
 builder.Services.ConfigureDbContext(builder.Configuration);
 builder.Services.ConfigureJwtAuthentication(builder.Configuration);
